@@ -1,0 +1,49 @@
+@'
+# ===== Root .gitignore for brainbattle-clan =====
+
+# Dependencies
+**/node_modules/
+
+# Builds
+**/dist/
+**/build/
+
+# Logs & pid
+**/logs/
+**/*.log
+**/*.pid
+**/*.pid.lock
+
+# Env (giữ lại file mẫu)
+**/.env
+**/.env.*
+!.env.example
+
+# Tests / Coverage
+**/coverage/
+**/.nyc_output/
+
+# Caches
+**/.turbo/
+**/.cache/
+**/.vite/
+**/.parcel-cache/
+
+# Next.js / Web (nếu có)
+**/.next/
+**/.vercel/
+
+# Prisma / DB local
+**/*.db
+**/*.db-journal
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+'@ | Set-Content .gitignore -NoNewline
