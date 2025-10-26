@@ -63,7 +63,7 @@ git clone https://github.com/brainbattle-platform/brainbattle-core.git
 cd brainbattle-core
 npm install
 ```
-###2️⃣ Environment Variables
+2️⃣ Environment Variables
 Create a file named .env in the project root:
 
 ```bash
