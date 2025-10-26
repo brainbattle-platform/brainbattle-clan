@@ -63,7 +63,8 @@ git clone https://github.com/brainbattle-platform/brainbattle-core.git
 cd brainbattle-core
 npm install
 ```
-2️⃣ Environment Variables
+
+### 2️⃣ Environment Variables
 Create a file named .env in the project root:
 
 ```bash
@@ -82,7 +83,7 @@ To encode your public.pem from the auth-service:
 ```bash
 cat public.pem | base64 -w 0
 ```
-###3️⃣ Run PostgreSQL with Docker
+### 3️⃣ Run PostgreSQL with Docker
 ```yaml
 # docker-compose.yml
 version: '3.9'
@@ -106,29 +107,29 @@ Start the DB:
 ```bash
 docker compose up -d
 ```
-###4️⃣ Generate Prisma Client & Run Migrations
+### 4️⃣ Generate Prisma Client & Run Migrations
 ```bash
 npx prisma generate
 npm run prisma:migrate
 npm run seed    # optional: seeds demo users u-1, u-2
 ```
-###5️⃣ Start the service
+### 5️⃣ Start the service
 ```bash
 npm run start:dev
 ```
-###✅ Service is available at:
+### ✅ Service is available at:
 
 ```arduino
 http://localhost:3001
 ```
-###🔌 API Endpoints (Summary)
-###👥 Social Graph
+### 🔌 API Endpoints (Summary)
+### 👥 Social Graph
 Method	Endpoint	Description
 POST	/v1/social/follows/:userId	Follow a user
 DELETE	/v1/social/follows/:userId	Unfollow
 GET	/v1/social/follows/mutual/:userId	Check mutual follow
 
-###🏰 Community (Clan)
+### 🏰 Community (Clan)
 Method	Endpoint	Description
 POST	/v1/clans	Create a clan
 GET	/v1/clans/:id	View clan details
@@ -136,13 +137,13 @@ POST	/v1/clans/:id/join-requests	Send join request
 POST	/v1/clans/:id/members	Approve a member
 GET	/v1/clans/:id/members	List members
 
-###🛡️ Moderation
+### 🛡️ Moderation
 Method	Endpoint	Description
 POST	/v1/reports	Submit a report
 GET	/v1/reports	List all reports
 PATCH	/v1/reports/:id	Resolve / dismiss a report
 
-###🧪 Testing with Postman
+### 🧪 Testing with Postman
 Example using a token from brainbattle-auth:
 
 ```bash
@@ -155,7 +156,7 @@ Or using curl:
 curl -X POST http://localhost:3001/v1/social/follows/u-2 \
   -H "Authorization: Bearer <ACCESS_TOKEN_U1>"
 ```
-###🧱 Project Structure
+### 🧱 Project Structure
 ```arduino
 src/
  ├── common/
@@ -171,7 +172,7 @@ prisma/
 docker-compose.yml
 .env.example
 ```
-###🔄 Useful Scripts
+### 🔄 Useful Scripts
 ```Command	Description
 npm run start:dev	Run service in watch mode
 npm run prisma:generate	Generate Prisma client
@@ -180,20 +181,16 @@ npm run seed	Seed demo users
 npm run format	Format source files
 npm run lint	Lint all files
 ```
-###🧭 Integration Flow
+### 🧭 Integration Flow
 ```mermaid
 graph TD;
     Auth["Auth Service (JWT RS256)"] -->|Verify| Core["Core Service (Social/Clan/Moderation)"];
     Core -->|REST APIs| Client["Frontend / Mobile App"];
 ```
-###🧰 Future Roadmap
+### 🧰 Future Roadmap
 Clan roles (Leader, Officer, Member)
-
 Pagination & sorting for social graph
-
 Activity logs and metrics endpoints
-
 Audit system & admin dashboards
-
 Redis caching for user lookups
 
