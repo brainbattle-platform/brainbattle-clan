@@ -1,0 +1,57 @@
+enum ThreadKind {
+  ONE_TO_ONE
+  CLAN
+}
+
+enum MessageKind {
+  TEXT
+  IMAGE
+  VIDEO
+  FILE
+  SYSTEM
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model DMThread {
+  id        String     @id @default(cuid())
+  kind      ThreadKind
+  pairKey   String?    @unique
+  clanId    String?
+  createdAt DateTime   @default(now())
+
+  participants DMParticipant[] @relation("ThreadParticipants")
+  messages     DMMessage[]     @relation("ThreadMessages")
+}
+
+model DMParticipant {
+  threadId   String
+  thread     DMThread @relation("ThreadParticipants", fields: [threadId], references: [id], onDelete: Cascade)
+  userId     String
+  role       String   @default("member")
+  joinedAt   DateTime @default(now())
+  lastReadId String?
+
+  @@id([threadId, userId])
+  @@index([userId])
+}
+
+model DMMessage {
+  id         String      @id @default(cuid())
+  threadId   String
+  thread     DMThread    @relation("ThreadMessages", fields: [threadId], references: [id], onDelete: Cascade)
+  senderId   String
+  kind       MessageKind @default(TEXT)
+  content    String?
+  attachment Json?
+  createdAt  DateTime    @default(now())
+
+  @@index([threadId, createdAt])
+}

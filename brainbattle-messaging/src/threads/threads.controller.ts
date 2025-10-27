@@ -1,0 +1,32 @@
+import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { JwtHttpGuard } from '../common/jwt.http-guard';
+import { ThreadsService } from './threads.service';
+import { CreateOneToOneDto } from './dto/create-one-to-one.dto';
+import { HistoryQueryDto } from './dto/history-query.dto';
+import { ParseIntPipe } from '@nestjs/common';
+
+@UseGuards(JwtHttpGuard)
+@Controller('v1/threads')
+export class ThreadsController {
+  constructor(private svc: ThreadsService) {}
+
+  @Post('one-to-one')
+  createOneToOne(@Req() req, @Body() dto: CreateOneToOneDto) {
+    return this.svc.createOneToOne(req.user.id, dto.peerId);
+  }
+
+  @Get(':id/participants')
+  participants(@Req() req, @Param('id') id: string) {
+    return this.svc.getParticipants(req.user.id, id);
+  }
+
+  @Get(':id/messages')
+history(
+  @Req() req,
+  @Param('id') id: string,
+  @Query('cursor') cursor?: string,
+  @Query('limit', new ParseIntPipe({ optional: true })) limit = 30,
+) {
+  return this.svc.getHistory(req.user.id, id, limit, cursor);
+}
+}
