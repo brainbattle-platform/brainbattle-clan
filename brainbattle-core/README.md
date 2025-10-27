@@ -1,98 +1,196 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 🧠 BrainBattle Core
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+> Core microservice for the **BrainBattle platform**, providing the foundation for social graph, community (Clan), and moderation features.  
+> Built with **NestJS**, **Prisma**, and **PostgreSQL**, verifying JWTs (RS256) issued by the `brainbattle-auth` service.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+---
 
-## Description
+## 🏗️ Overview
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+`brainbattle-core` is part of the **BrainBattle microservice ecosystem**:
 
-## Project setup
+| Service | Purpose | Ports | Tech |
+|----------|----------|--------|------|
+| 🧠 **Auth Service** | Authentication, JWT RS256, OTP | `3000` | NestJS + Prisma |
+| ⚙️ **Core Service (this)** | Social Graph, Clans, Moderation | `3001` | NestJS + Prisma + PostgreSQL |
+| 💬 **Messaging Service** | 1v1 & Clan chat (Socket.IO + Redis) | `3002` | NestJS + Prisma + Redis |
 
+---
+
+## ✨ Features
+
+### 🧩 Social Graph
+- Follow / unfollow users  
+- Detect mutual relationships  
+- Block users  
+
+### 🏰 Community (Clan)
+- Create / manage clans  
+- Join requests & invitations  
+- Approve / reject membership  
+- Role management (Leader / Officer / Member)
+
+### 🛡️ Moderation (Lite)
+- Report users or clans  
+- Admin review workflow  
+- Resolve or dismiss reports
+
+### 🔐 Auth Integration
+- Validates RS256 tokens from `brainbattle-auth`
+- Uses `JWT_PUBLIC_KEY_BASE64` (Base64 of `public.pem`)
+
+---
+
+## 🧰 Tech Stack
+
+| Category | Tools |
+|-----------|-------|
+| Language | TypeScript |
+| Framework | [NestJS](https://nestjs.com) |
+| ORM | [Prisma ORM](https://www.prisma.io) |
+| Database | PostgreSQL |
+| Auth | JWT RS256 (verify only) |
+| Config | `@nestjs/config`, `.env` |
+| Dev | Docker Compose, ESLint, Prettier |
+
+---
+
+## ⚙️ Setup Guide
+
+### 1️⃣ Clone the repository
 ```bash
-$ npm install
+git clone https://github.com/brainbattle-platform/brainbattle-core.git
+cd brainbattle-core
+npm install
 ```
 
-## Compile and run the project
+### 2️⃣ Environment Variables
+Create a file named .env in the project root:
 
 ```bash
-# development
-$ npm run start
+# .env
+NODE_ENV=development
+PORT=3001
+DATABASE_URL=postgresql://postgres:postgres@localhost:5434/coredb?schema=public
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+# JWT Verification (public key from brainbattle-auth)
+JWT_ISSUER=brainbattle-auth
+JWT_AUDIENCE=brainbattle-clients
+JWT_PUBLIC_KEY_BASE64=LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0t...
 ```
-
-## Run tests
+To encode your public.pem from the auth-service:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+cat public.pem | base64 -w 0
 ```
+### 3️⃣ Run PostgreSQL with Docker
+```yaml
+# docker-compose.yml
+version: '3.9'
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: coredb
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+volumes:
+  pgdata:
+```
+Start the DB:
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+docker compose up -d
 ```
+### 4️⃣ Generate Prisma Client & Run Migrations
+```bash
+npx prisma generate
+npm run prisma:migrate
+npm run seed    # optional: seeds demo users u-1, u-2
+```
+### 5️⃣ Start the service
+```bash
+npm run start:dev
+```
+### ✅ Service is available at:
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+```arduino
+http://localhost:3001
+```
+### 🔌 API Endpoints (Summary)
+### 👥 Social Graph
+Method	Endpoint	Description
+POST	/v1/social/follows/:userId	Follow a user
+DELETE	/v1/social/follows/:userId	Unfollow
+GET	/v1/social/follows/mutual/:userId	Check mutual follow
 
-## Resources
+### 🏰 Community (Clan)
+Method	Endpoint	Description
+POST	/v1/clans	Create a clan
+GET	/v1/clans/:id	View clan details
+POST	/v1/clans/:id/join-requests	Send join request
+POST	/v1/clans/:id/members	Approve a member
+GET	/v1/clans/:id/members	List members
 
-Check out a few resources that may come in handy when working with NestJS:
+### 🛡️ Moderation
+Method	Endpoint	Description
+POST	/v1/reports	Submit a report
+GET	/v1/reports	List all reports
+PATCH	/v1/reports/:id	Resolve / dismiss a report
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+### 🧪 Testing with Postman
+Example using a token from brainbattle-auth:
 
-## Support
+```bash
+POST http://localhost:3001/v1/social/follows/u-2
+Authorization: Bearer <ACCESS_TOKEN_U1>
+```
+Or using curl:
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```bash
+curl -X POST http://localhost:3001/v1/social/follows/u-2 \
+  -H "Authorization: Bearer <ACCESS_TOKEN_U1>"
+```
+### 🧱 Project Structure
+```arduino
+src/
+ ├── common/
+ │   └── jwt.guard.ts
+ ├── social-graph/
+ ├── community/
+ ├── moderation/
+ ├── config/
+ └── app.module.ts
+prisma/
+ ├── schema.prisma
+ └── seed.ts
+docker-compose.yml
+.env.example
+```
+### 🔄 Useful Scripts
+```Command	Description
+npm run start:dev	Run service in watch mode
+npm run prisma:generate	Generate Prisma client
+npm run prisma:migrate	Apply DB migrations
+npm run seed	Seed demo users
+npm run format	Format source files
+npm run lint	Lint all files
+```
+### 🧭 Integration Flow
+```mermaid
+graph TD;
+    Auth["Auth Service (JWT RS256)"] -->|Verify| Core["Core Service (Social/Clan/Moderation)"];
+    Core -->|REST APIs| Client["Frontend / Mobile App"];
+```
+### 🧰 Future Roadmap
+Clan roles (Leader, Officer, Member)
+Pagination & sorting for social graph
+Activity logs and metrics endpoints
+Audit system & admin dashboards
+Redis caching for user lookups
 
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
