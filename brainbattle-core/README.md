@@ -215,10 +215,9 @@ docker-compose.yml
 ## 🧭 Integration Flow
 
 ```mermaid
-graph TD;
-    graph TD;
-    Auth["Auth Service (JWT RS256)"] -->|Verify| Core["Core Service (Social/Clan/Moderation)"];
-    Core -->|REST APIs| Client["Frontend / Mobile App"];
+graph TD
+    Auth["Auth Service (JWT RS256)"] -->|Verify| Core["Core Service (Social/Clan/Moderation)"]
+    Core -->|REST APIs| Client["Frontend / Mobile App"]
 ```
 
 ---
