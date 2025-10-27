@@ -216,9 +216,9 @@ docker-compose.yml
 
 ```mermaid
 graph TD;
-    Auth[Auth Service] -->|Verify JWT| Core[Core Service (Social/Clan/Moderation)];
-    Core -->|REST APIs| Client[Frontend / Mobile];
-    Client --> Messaging[Messaging Service];
+    graph TD;
+    Auth["Auth Service (JWT RS256)"] -->|Verify| Core["Core Service (Social/Clan/Moderation)"];
+    Core -->|REST APIs| Client["Frontend / Mobile App"];
 ```
 
 ---
