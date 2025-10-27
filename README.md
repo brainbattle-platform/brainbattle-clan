@@ -85,40 +85,36 @@ A typical full flow involves:
   4. Exchange messages → observe real-time WS delivery
   5. Mark read / receipts updates
   6. Check moderation reports for content or users
+
 💡 Each service can also be tested independently using the same tokens and databases.
 
 ---
 
-🚀 Deployment Notes
-
+## 🚀 Deployment Notes
 Each microservice uses its own PostgreSQL + Redis instance.
-
 JWT public key must match that of brainbattle-auth.
-
 Socket.IO Redis adapter enables horizontal scaling (multi-instance).
-
 All timestamps are in UTC.
 
-📘 Next Steps (Sprint 4 Roadmap)
+---
 
-Group (Clan) chat synchronization with BrainBattle Core
+## 🧰 Tooling & Dev Notes
 
-File upload presigned URL workflow (S3 or GCS)
+* Unified NestJS + Prisma conventions across all services
+* Shared schema principles (DMThread, Clan, UserRelation)
+* Follows clean microservice pattern: isolation + authentication boundary
+* Ready for Dockerized orchestration and future gRPC or message bus integration
 
-Central moderation dashboard (merge DM + community reports)
+---
 
-Notification microservice integration for offline alerts
+## 🧭 Roadmap
 
-🧭 Future Roadmap
+* Add brainbattle-notification service (push/email)
+* Inter-service event queue (Kafka / NATS)
+* Unified user moderation dashboard
+* CI/CD workflow for service deployment
 
-Clan role hierarchy (Leader, Officer, Member)
+---
 
-Pagination and sorting for Social Graph
-
-Activity logs & metrics endpoints
-
-Admin dashboards & audit trails
-
-Redis caching for user lookup
-
-© 2025 BrainBattle Platform — Messaging microservice (v3.0) Maintained by the Core Infrastructure Team.
+> © 2025 BrainBattle Platform – Clan Monorepo (Core + Messaging)
+> Maintained by BrainBattle Core Infrastructure TeamInfrastructure Team.
