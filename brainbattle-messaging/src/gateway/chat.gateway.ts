@@ -1,4 +1,7 @@
 // src/gateway/chat.gateway.ts
+import { OnGatewayInit } from '@nestjs/websockets';
+import { createAdapter } from '@socket.io/redis-adapter';
+import { createClient } from 'redis';
 import { UseGuards } from '@nestjs/common';
 import {
   WebSocketGateway,
@@ -19,24 +22,24 @@ import type { AuthSocket, JoinPayload, SendMessagePayload, TypingPayload } from 
 
 const mapKind = (k?: string): MessageKind => {
   switch ((k ?? 'text').toLowerCase()) {
-    case 'image':  return MessageKind.IMAGE;
-    case 'video':  return MessageKind.VIDEO;
-    case 'file':   return MessageKind.FILE;
+    case 'image': return MessageKind.IMAGE;
+    case 'video': return MessageKind.VIDEO;
+    case 'file': return MessageKind.FILE;
     case 'system': return MessageKind.SYSTEM;
-    default:       return MessageKind.TEXT;
+    default: return MessageKind.TEXT;
   }
 };
 
 
 @WebSocketGateway({ namespace: '/dm', cors: { origin: true, credentials: true } })
 @UseGuards(JwtWsGuard)
-export class ChatGateway implements OnGatewayConnection {
+export class ChatGateway implements OnGatewayConnection, OnGatewayInit {
   @WebSocketServer() io!: Server;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly rl: RateLimitService,
-  ) {}
+  ) { }
 
   // Presence
   async handleConnection(client: AuthSocket) {
@@ -167,4 +170,56 @@ export class ChatGateway implements OnGatewayConnection {
       serverTime: Date.now(),
     });
   }
+
+  @SubscribeMessage('message.update')
+  async wsEdit(@ConnectedSocket() client: AuthSocket, @MessageBody() p: { messageId: string; content: string }) {
+    const uid = client.user!.id;
+    const msg = await this.prisma.dMMessage.findUnique({ where: { id: p.messageId } });
+    if (!msg) return client.emit('system.error', { code: 'NOT_FOUND' });
+    if (msg.senderId !== uid) return client.emit('system.error', { code: 'NOT_PERMITTED' });
+    if (msg.deletedAt) return client.emit('system.error', { code: 'DELETED' });
+
+    const updated = await this.prisma.dMMessage.update({
+      where: { id: msg.id },
+      data: { content: p.content, editedAt: new Date() },
+    });
+    this.io.to(`thread:${msg.threadId}`).emit('message.updated', { message: updated, serverTime: Date.now() });
+  }
+
+  @SubscribeMessage('message.delete')
+  async wsDelete(@ConnectedSocket() client: AuthSocket, @MessageBody() p: { messageId: string }) {
+    const uid = client.user!.id;
+    const msg = await this.prisma.dMMessage.findUnique({ where: { id: p.messageId } });
+    if (!msg) return client.emit('system.error', { code: 'NOT_FOUND' });
+    if (msg.senderId !== uid) return client.emit('system.error', { code: 'NOT_PERMITTED' });
+
+    const deleted = await this.prisma.dMMessage.update({
+      where: { id: msg.id },
+      data: {
+        deletedAt: new Date(),
+        deletedBy: uid,
+        content: null,
+        attachment: Prisma.DbNull,   // ⬅️ thay vì null
+      },
+    });
+    this.io.to(`thread:${msg.threadId}`).emit('message.deleted', {
+      id: deleted.id, threadId: msg.threadId, serverTime: Date.now()
+    });
+
+  }
+
+  // thêm lifecycle afterInit
+  async afterInit(server: Server) {
+    const url = process.env.REDIS_URL ?? 'redis://localhost:6381';
+    const pubClient = createClient({ url });
+    const subClient = pubClient.duplicate();
+
+    await pubClient.connect();
+    await subClient.connect();
+
+    server.adapter(createAdapter(pubClient, subClient));
+    // (tuỳ chọn) log:
+    // console.log('[WS] Redis adapter attached');
+  }
+
 }

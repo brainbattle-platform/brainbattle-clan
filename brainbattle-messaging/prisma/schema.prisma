@@ -61,6 +61,10 @@ model DMMessage {
   attachment Json?
   createdAt  DateTime    @default(now())
 
+  editedAt  DateTime?
+  deletedAt DateTime?
+  deletedBy String?
+
   @@index([threadId, createdAt])
 }
 
@@ -86,4 +90,18 @@ model DMReport {
 
   @@index([messageId])
   @@index([reporterId])
+}
+
+model DMUserThreadSetting {
+  threadId   String
+  userId     String
+  mutedUntil DateTime?
+  pinnedAt   DateTime?
+  archivedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@id([threadId, userId])
+  @@index([userId])
+  @@index([threadId])
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Req, UseGuards, Patch } from '@nestjs/common';
 import { JwtHttpGuard } from '../common/jwt.http-guard';
 import { ThreadsService } from './threads.service';
 import { CreateOneToOneDto } from './dto/create-one-to-one.dto';
@@ -39,5 +39,17 @@ export class ThreadsController {
   getClanThread(@Req() req, @Param('clanId') clanId: string) {
     return this.svc.getOrCreateClanThread(req.user.id, clanId);
   }
+
+  @Get(':id/messages/search')
+  search(@Req() req, @Param('id') id: string, @Query('q') q: string, @Query('limit') limit?: string, @Query('cursor') cursor?: string) {
+    const n = Math.min(Math.max(parseInt(limit || '20', 10), 1), 100);
+    return this.svc.searchMessages(req.user.id, id, q, n, cursor);
+  }
+
+  @Patch(':id/settings')
+  updateSettings(@Req() req, @Param('id') id: string, @Body() dto: { mutedUntil?: string; pinned?: boolean; archived?: boolean }) {
+    return this.svc.updateSettings(req.user.id, id, dto);
+  }
+
 
 }

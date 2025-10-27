@@ -101,4 +101,41 @@ export class ThreadsService {
     return this.getOrCreateClanThread(me, clanId);
   }
 
+  async searchMessages(me: string, threadId: string, q: string, limit = 20, cursor?: string) {
+  await this.ensureParticipant(me, threadId);
+  if (!q?.trim()) return { items: [], nextCursor: null };
+
+  const items = await this.prisma.dMMessage.findMany({
+    where: {
+      threadId,
+      deletedAt: null,
+      OR: [
+        { content: { contains: q, mode: 'insensitive' } },
+        // NOTE: nếu muốn search theo attachment meta thì map thêm điều kiện
+      ],
+    },
+    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    take: limit,
+    ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+  });
+
+  const nextCursor = items.length ? items[items.length - 1].id : null;
+  return { items, nextCursor };
+}
+
+async updateSettings(me: string, threadId: string, dto: { mutedUntil?: string; pinned?: boolean; archived?: boolean }) {
+  await this.ensureParticipant(me, threadId);
+  const data: any = {};
+  if (dto.mutedUntil !== undefined) data.mutedUntil = dto.mutedUntil ? new Date(dto.mutedUntil) : null;
+  if (dto.pinned !== undefined) data.pinnedAt = dto.pinned ? new Date() : null;
+  if (dto.archived !== undefined) data.archivedAt = dto.archived ? new Date() : null;
+
+  const r = await this.prisma.dMUserThreadSetting.upsert({
+    where: { threadId_userId: { threadId, userId: me } },
+    update: data,
+    create: { threadId, userId: me, ...data },
+  });
+  return r;
+}
+
 }
