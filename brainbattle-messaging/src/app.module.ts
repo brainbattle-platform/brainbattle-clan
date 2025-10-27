@@ -5,6 +5,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { ThreadsModule } from './threads/threads.module';
 import { ChatGateway } from './gateway/chat.gateway';
 import { RateLimitService } from './rate/rl.service';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { RateLimitService } from './rate/rl.service';
     }),
     PrismaModule,
     ThreadsModule,
+    UploadModule,
   ],
   providers: [ChatGateway, RateLimitService],
 })

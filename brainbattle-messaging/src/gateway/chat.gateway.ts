@@ -12,12 +12,21 @@ import { Server } from 'socket.io';
 import { JwtWsGuard } from '../common/jwt.ws-guard';
 import { PrismaService } from '../prisma/prisma.service';
 import { RateLimitService } from '../rate/rl.service';
-import { Prisma } from '@prisma/client';
+import { Prisma, MessageKind } from '@prisma/client';
 
-// CHỈ import kiểu cho isolatedModules
+// chỉ import kiểu (isolatedModules)
 import type { AuthSocket, JoinPayload, SendMessagePayload, TypingPayload } from './chat.types';
 
-const mapKind = (k?: string) => { switch ((k ?? 'text').toLowerCase()) { case 'image': return 'IMAGE'; case 'video': return 'VIDEO'; case 'file': return 'FILE'; case 'system': return 'SYSTEM'; default: return 'TEXT'; } };
+const mapKind = (k?: string): MessageKind => {
+  switch ((k ?? 'text').toLowerCase()) {
+    case 'image':  return MessageKind.IMAGE;
+    case 'video':  return MessageKind.VIDEO;
+    case 'file':   return MessageKind.FILE;
+    case 'system': return MessageKind.SYSTEM;
+    default:       return MessageKind.TEXT;
+  }
+};
+
 
 @WebSocketGateway({ namespace: '/dm', cors: { origin: true, credentials: true } })
 @UseGuards(JwtWsGuard)
@@ -29,109 +38,102 @@ export class ChatGateway implements OnGatewayConnection {
     private readonly rl: RateLimitService,
   ) {}
 
-  // Kết nối mới: set presence
+  // Presence
   async handleConnection(client: AuthSocket) {
     const uid = client.user?.id;
-    if (!uid) return; // guard sẽ reject từ trước, đây để an toàn
+    if (!uid) return;
     await this.rl.setPresence(uid, true);
     client.on('disconnect', async () => {
       await this.rl.setPresence(uid, false);
     });
   }
 
-  // Tham gia 1 thread (room)
+  // Join thread room
   @SubscribeMessage('join')
-  async join(
-    @ConnectedSocket() client: AuthSocket,
-    @MessageBody() payload: JoinPayload,
-  ) {
+  async join(@ConnectedSocket() client: AuthSocket, @MessageBody() payload: JoinPayload) {
     const uid = client.user!.id;
     const { threadId } = payload;
 
     const part = await this.prisma.dMParticipant.findUnique({
       where: { threadId_userId: { threadId, userId: uid } },
     });
-    if (!part) {
-      client.emit('system.error', { code: 'NOT_PARTICIPANT' });
-      return;
-    }
+    if (!part) return client.emit('system.error', { code: 'NOT_PARTICIPANT' });
 
     client.join(`thread:${threadId}`);
-    client.emit('joined', { threadId });
+    client.emit('joined', { threadId, serverTime: Date.now() });
   }
 
-  // Rời room
+  // Leave thread room
   @SubscribeMessage('leave')
-  async leave(
-    @ConnectedSocket() client: AuthSocket,
-    @MessageBody() payload: JoinPayload,
-  ) {
+  async leave(@ConnectedSocket() client: AuthSocket, @MessageBody() payload: JoinPayload) {
     client.leave(`thread:${payload.threadId}`);
-    client.emit('left', { threadId: payload.threadId });
+    client.emit('left', { threadId: payload.threadId, serverTime: Date.now() });
   }
 
-  // Typing indicator
+  // Typing
   @SubscribeMessage('typing')
-  async typing(
-    @ConnectedSocket() client: AuthSocket,
-    @MessageBody() p: TypingPayload,
-  ) {
+  async typing(@ConnectedSocket() client: AuthSocket, @MessageBody() p: TypingPayload) {
     const uid = client.user!.id;
-    client.to(`thread:${p.threadId}`).emit('typing', {
-      userId: uid,
-      isTyping: p.isTyping,
-    });
+    client.to(`thread:${p.threadId}`).emit('typing', { userId: uid, isTyping: p.isTyping, serverTime: Date.now() });
   }
 
-  // Gửi tin nhắn
+  // Send message (+ delivered receipts)
   @SubscribeMessage('message.send')
-  async send(
-    @ConnectedSocket() client: AuthSocket,
-    @MessageBody() p: SendMessagePayload,
-  ) {
+  async send(@ConnectedSocket() client: AuthSocket, @MessageBody() p: SendMessagePayload) {
     const uid = client.user!.id;
 
-    // Rate-limit theo user + thread
-    const bucket = `thread:${p.threadId}`;
-    if (!(await this.rl.allow(uid, bucket))) {
-      client.emit('system.error', { code: 'RATE_LIMITED' });
-      return;
+    // Rate-limit per user/thread
+    if (!(await this.rl.allow(uid, `thread:${p.threadId}`))) {
+      return client.emit('system.error', { code: 'RATE_LIMITED' });
     }
 
-    // Phải là participant
+    // Must be participant
     const ok = await this.prisma.dMParticipant.findUnique({
       where: { threadId_userId: { threadId: p.threadId, userId: uid } },
     });
-    if (!ok) {
-      client.emit('system.error', { code: 'NOT_PARTICIPANT' });
-      return;
+    if (!ok) return client.emit('system.error', { code: 'NOT_PARTICIPANT' });
+
+    // Basic payload validation: text phải có content; media/file cần attachment
+    const k = mapKind(p.kind);
+    if (k === MessageKind.TEXT && !p.content?.trim()) {
+      return client.emit('system.error', { code: 'EMPTY_TEXT' });
+    }
+    if (k !== MessageKind.TEXT && !p.attachment) {
+      return client.emit('system.error', { code: 'MISSING_ATTACHMENT' });
     }
 
-    // Lưu message
+    // Save message
     const msg = await this.prisma.dMMessage.create({
       data: {
         threadId: p.threadId,
         senderId: uid,
-        kind: mapKind(p.kind),
+        kind: k,
         content: p.content ?? null,
         attachment: p.attachment ?? null,
       },
     });
 
     const room = `thread:${p.threadId}`;
-    // Fan-out message + delivered receipt
-    this.io.to(room).emit('message.new', {
-      message: msg,
-      clientMsgId: p.clientMsgId,
+
+    // Create delivered receipts for all other participants
+    const participants = await this.prisma.dMParticipant.findMany({
+      where: { threadId: p.threadId },
+      select: { userId: true },
     });
-    this.io.to(room).emit('receipt.delivered', {
-      threadId: p.threadId,
-      messageId: msg.id,
-      senderId: uid,
-    });
+    const others = participants.filter(u => u.userId !== uid);
+    if (others.length) {
+      await this.prisma.dMReceipt.createMany({
+        data: others.map(o => ({ messageId: msg.id, userId: o.userId })),
+        skipDuplicates: true,
+      });
+    }
+
+    // Broadcast message + delivered event
+    this.io.to(room).emit('message.new', { message: msg, clientMsgId: p.clientMsgId, serverTime: Date.now() });
+    this.io.to(room).emit('receipt.delivered', { threadId: p.threadId, messageId: msg.id, senderId: uid, serverTime: Date.now() });
   }
 
-  // Đánh dấu đọc
+  // Mark read (update participant checkpoint + receipt.readAt)
   @SubscribeMessage('message.read')
   async markRead(
     @ConnectedSocket() client: AuthSocket,
@@ -139,14 +141,30 @@ export class ChatGateway implements OnGatewayConnection {
   ) {
     const uid = client.user!.id;
 
+    // Ensure participant
+    const part = await this.prisma.dMParticipant.findUnique({
+      where: { threadId_userId: { threadId: payload.threadId, userId: uid } },
+      select: { userId: true },
+    });
+    if (!part) return client.emit('system.error', { code: 'NOT_PARTICIPANT' });
+
+    // Update lastReadId checkpoint
     await this.prisma.dMParticipant.update({
       where: { threadId_userId: { threadId: payload.threadId, userId: uid } },
       data: { lastReadId: payload.messageId },
     });
 
+    // Upsert read receipt
+    await this.prisma.dMReceipt.upsert({
+      where: { messageId_userId: { messageId: payload.messageId, userId: uid } },
+      update: { readAt: new Date() },
+      create: { messageId: payload.messageId, userId: uid, readAt: new Date() },
+    });
+
     client.to(`thread:${payload.threadId}`).emit('receipt.read', {
       userId: uid,
       messageId: payload.messageId,
+      serverTime: Date.now(),
     });
   }
 }

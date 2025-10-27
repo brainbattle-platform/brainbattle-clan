@@ -8,7 +8,7 @@ import { ParseIntPipe } from '@nestjs/common';
 @UseGuards(JwtHttpGuard)
 @Controller('v1/threads')
 export class ThreadsController {
-  constructor(private svc: ThreadsService) {}
+  constructor(private svc: ThreadsService) { }
 
   @Post('one-to-one')
   createOneToOne(@Req() req, @Body() dto: CreateOneToOneDto) {
@@ -21,12 +21,23 @@ export class ThreadsController {
   }
 
   @Get(':id/messages')
-history(
-  @Req() req,
-  @Param('id') id: string,
-  @Query('cursor') cursor?: string,
-  @Query('limit', new ParseIntPipe({ optional: true })) limit = 30,
-) {
-  return this.svc.getHistory(req.user.id, id, limit, cursor);
-}
+  history(
+    @Req() req,
+    @Param('id') id: string,
+    @Query('cursor') cursor?: string,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit = 30,
+  ) {
+    return this.svc.getHistory(req.user.id, id, limit, cursor);
+  }
+
+  @Post('clan')
+  createClan(@Req() req, @Body() body: { clanId: string }) {
+    return this.svc.createClanThread(req.user.id, body.clanId);
+  }
+
+  @Get('/clans/:clanId/thread')
+  getClanThread(@Req() req, @Param('clanId') clanId: string) {
+    return this.svc.getOrCreateClanThread(req.user.id, clanId);
+  }
+
 }

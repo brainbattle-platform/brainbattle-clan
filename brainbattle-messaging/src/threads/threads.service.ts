@@ -4,7 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class ThreadsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   /** Tạo khóa cặp user theo thứ tự để đảm bảo 1–1 duy nhất */
   private pairKey(a: string, b: string) {
@@ -29,7 +29,7 @@ export class ThreadsService {
         kind: 'ONE_TO_ONE',
         pairKey,
         participants: {
-          create: [{ userId: me }, { userId: peer }], 
+          create: [{ userId: me }, { userId: peer }],
         },
       },
       select: { id: true },
@@ -74,4 +74,31 @@ export class ThreadsService {
 
     return { items, nextCursor };
   }
+
+  async getOrCreateClanThread(me: string, clanId: string) {
+    // TODO (phase 2): call core to verify membership of `me` in clanId
+    let thread = await this.prisma.dMThread.findFirst({
+      where: { kind: 'CLAN', clanId },
+      select: { id: true },
+    });
+    if (!thread) {
+      thread = await this.prisma.dMThread.create({
+        data: { kind: 'CLAN', clanId },
+        select: { id: true },
+      });
+    }
+    // ensure membership record for `me`
+    await this.prisma.dMParticipant.upsert({
+      where: { threadId_userId: { threadId: thread.id, userId: me } },
+      update: {},
+      create: { threadId: thread.id, userId: me, role: 'member' },
+    });
+    return { threadId: thread.id };
+  }
+
+  async createClanThread(me: string, clanId: string) {
+    // sugar: gọi API trên và trả về
+    return this.getOrCreateClanThread(me, clanId);
+  }
+
 }
