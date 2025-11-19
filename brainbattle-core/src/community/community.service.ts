@@ -1,10 +1,21 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import slugify from 'slugify';
+import { ForbiddenException } from '@nestjs/common';
+
 
 @Injectable()
 export class CommunityService {
   constructor(private prisma: PrismaService) {}
+
+  private async requireLeader(clanId: string, actorId: string) {
+    const member = await this.prisma.clanMember.findUnique({
+      where: { clanId_userId: { clanId, userId: actorId } },
+    });
+    if (!member || member.role !== 'leader') {
+      throw new ForbiddenException('Only clan leader can perform this action');
+    }
+  }
 
   async createClan(me: string, dto: { name: string; visibility: 'public'|'private' }) {
     const slug = slugify(dto.name, { lower: true, strict: true }) + '-' + Math.random().toString(36).slice(2,6);
@@ -28,17 +39,25 @@ export class CommunityService {
     }
 
   async approveJoin(actor: string, clanId: string, userId: string) {
+    await this.requireLeader(clanId, actor);   
     await this.prisma.clanMember.upsert({
       where: { clanId_userId: { clanId, userId } },
       update: { status: 'active' },
       create: { clanId, userId, role: 'member', status: 'active' },
     });
-    await this.prisma.clanJoinRequest.updateMany({ where: { clanId, requesterId: userId }, data: { status: 'approved' } });
+    await this.prisma.clanJoinRequest.updateMany({
+      where: { clanId, requesterId: userId },
+      data: { status: 'approved' },
+    });
     return { ok: true };
   }
 
   async kick(actor: string, clanId: string, userId: string) {
-    await this.prisma.clanMember.delete({ where: { clanId_userId: { clanId, userId } } });
+    await this.requireLeader(clanId, actor);   
+
+    await this.prisma.clanMember.delete({
+      where: { clanId_userId: { clanId, userId } },
+    });
     return { ok: true };
   }
 }

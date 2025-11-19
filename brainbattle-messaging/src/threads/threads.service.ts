@@ -1,6 +1,8 @@
 // src/threads/threads.service.ts
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { SearchMessagesDto } from './dto/search-messages.dto';
+
 
 @Injectable()
 export class ThreadsService {
@@ -11,12 +13,6 @@ export class ThreadsService {
     return [a, b].sort().join(':');
   }
 
-  /**
-   * Tạo (hoặc lấy) thread 1–1 giữa me và peer.
-   * - Không cho DM chính mình
-   * - Dùng pairKey để upsert, đảm bảo idempotent
-   * - Nested create participants KHÔNG cần truyền threadId (Prisma tự liên kết)
-   */
   async createOneToOne(me: string, peer: string) {
     if (me === peer) throw new ForbiddenException('cannot dm self');
 
@@ -57,7 +53,7 @@ export class ThreadsService {
   }
 
   /** Lịch sử tin nhắn có phân trang cursor */
-  async getHistory(me: string, threadId: string, limit = 30, cursor?: string) {
+  async getHistory(me: string, threadId: string, limit = 30, cursor?: string,) {
     await this.ensureParticipant(me, threadId);
 
     const take = Math.min(Math.max(limit, 1), 100);
@@ -101,41 +97,58 @@ export class ThreadsService {
     return this.getOrCreateClanThread(me, clanId);
   }
 
-  async searchMessages(me: string, threadId: string, q: string, limit = 20, cursor?: string) {
-  await this.ensureParticipant(me, threadId);
-  if (!q?.trim()) return { items: [], nextCursor: null };
+  async searchMessages(
+    me: string,
+    threadId: string,
+    dto: SearchMessagesDto,
+  ) {
+    await this.ensureParticipant(me, threadId);
 
-  const items = await this.prisma.dMMessage.findMany({
-    where: {
-      threadId,
-      deletedAt: null,
-      OR: [
-        { content: { contains: q, mode: 'insensitive' } },
-        // NOTE: nếu muốn search theo attachment meta thì map thêm điều kiện
-      ],
-    },
-    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-    take: limit,
-    ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
-  });
+    const q = dto.q?.trim();
+    if (!q) return { items: [], nextCursor: null };
 
-  const nextCursor = items.length ? items[items.length - 1].id : null;
-  return { items, nextCursor };
-}
+    const limit = Math.min(Number(dto.limit ?? 20), 100);
+    const cursor = dto.cursor;
 
-async updateSettings(me: string, threadId: string, dto: { mutedUntil?: string; pinned?: boolean; archived?: boolean }) {
-  await this.ensureParticipant(me, threadId);
-  const data: any = {};
-  if (dto.mutedUntil !== undefined) data.mutedUntil = dto.mutedUntil ? new Date(dto.mutedUntil) : null;
-  if (dto.pinned !== undefined) data.pinnedAt = dto.pinned ? new Date() : null;
-  if (dto.archived !== undefined) data.archivedAt = dto.archived ? new Date() : null;
+    const items = await this.prisma.dMMessage.findMany({
+      where: {
+        threadId,
+        deletedAt: null,
+        OR: [
+          {
+            content: {
+              contains: q,
+              mode: 'insensitive',
+            },
+          },
+        ],
+      },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: limit,
+      ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+    });
 
-  const r = await this.prisma.dMUserThreadSetting.upsert({
-    where: { threadId_userId: { threadId, userId: me } },
-    update: data,
-    create: { threadId, userId: me, ...data },
-  });
-  return r;
-}
+    // 🔧 Fix: tránh lỗi "Object is possibly undefined"
+    const last = items.length ? items[items.length - 1] : null;
+    const nextCursor = last ? last.id : null;
+
+    return { items, nextCursor };
+  }
+
+
+  async updateSettings(me: string, threadId: string, dto: { mutedUntil?: string; pinned?: boolean; archived?: boolean }) {
+    await this.ensureParticipant(me, threadId);
+    const data: any = {};
+    if (dto.mutedUntil !== undefined) data.mutedUntil = dto.mutedUntil ? new Date(dto.mutedUntil) : null;
+    if (dto.pinned !== undefined) data.pinnedAt = dto.pinned ? new Date() : null;
+    if (dto.archived !== undefined) data.archivedAt = dto.archived ? new Date() : null;
+
+    const r = await this.prisma.dMUserThreadSetting.upsert({
+      where: { threadId_userId: { threadId, userId: me } },
+      update: data,
+      create: { threadId, userId: me, ...data },
+    });
+    return r;
+  }
 
 }

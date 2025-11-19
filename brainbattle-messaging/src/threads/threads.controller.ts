@@ -3,6 +3,8 @@ import { JwtHttpGuard } from '../common/jwt.http-guard';
 import { ThreadsService } from './threads.service';
 import { CreateOneToOneDto } from './dto/create-one-to-one.dto';
 import { HistoryQueryDto } from './dto/history-query.dto';
+import { UpdateThreadSettingsDto } from './dto/update-thread-settings.dto';
+import { SearchMessagesDto } from './dto/search-messages.dto';
 import { ParseIntPipe } from '@nestjs/common';
 
 @UseGuards(JwtHttpGuard)
@@ -30,6 +32,16 @@ export class ThreadsController {
     return this.svc.getHistory(req.user.id, id, limit, cursor);
   }
 
+  @Get(':id/messages/search')
+  search(
+    @Req() req,
+    @Param('id') id: string,
+    @Query() query: SearchMessagesDto,
+  ) {
+    return this.svc.searchMessages(req.user.id, id, query);
+  }
+
+
   @Post('clan')
   createClan(@Req() req, @Body() body: { clanId: string }) {
     return this.svc.createClanThread(req.user.id, body.clanId);
@@ -40,11 +52,6 @@ export class ThreadsController {
     return this.svc.getOrCreateClanThread(req.user.id, clanId);
   }
 
-  @Get(':id/messages/search')
-  search(@Req() req, @Param('id') id: string, @Query('q') q: string, @Query('limit') limit?: string, @Query('cursor') cursor?: string) {
-    const n = Math.min(Math.max(parseInt(limit || '20', 10), 1), 100);
-    return this.svc.searchMessages(req.user.id, id, q, n, cursor);
-  }
 
   @Patch(':id/settings')
   updateSettings(@Req() req, @Param('id') id: string, @Body() dto: { mutedUntil?: string; pinned?: boolean; archived?: boolean }) {
