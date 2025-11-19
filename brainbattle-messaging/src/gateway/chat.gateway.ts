@@ -12,7 +12,7 @@ import {
   ConnectedSocket,
 } from '@nestjs/websockets';
 import { Server } from 'socket.io';
-import { JwtWsGuard } from '../common/jwt.ws-guard';
+import { JwtWsGuard } from '../common/jwt.ws-guard_local';
 import { PrismaService } from '../prisma/prisma.service';
 import { RateLimitService } from '../rate/rl.service';
 import { Prisma, MessageKind } from '@prisma/client';

@@ -1,21 +1,26 @@
-import { Body, Controller, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { JwtHttpGuard } from '../common/jwt.http-guard';
-import { PrismaService } from '../prisma/prisma.service';
+import { ModerationService } from './moderation.service';
+import { CreateDmReportDto } from './dto/create-report.dto';
+import { ResolveDmReportDto } from './dto/resolve-report.dto';
 
 @UseGuards(JwtHttpGuard)
 @Controller('v1/reports')
 export class ModerationController {
-  constructor(private prisma: PrismaService) {}
+  constructor(private service: ModerationService) {}
 
   @Post()
-  create(@Req() req, @Body() body: { messageId: string; reason: string }) {
-    return this.prisma.dMReport.create({
-      data: { messageId: body.messageId, reporterId: req.user.id, reason: body.reason },
-    });
+  create(@Req() req, @Body() dto: CreateDmReportDto) {
+    return this.service.create(dto, req.user.id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() body: { status: 'OPEN'|'RESOLVED'|'REJECTED' }) {
-    return this.prisma.dMReport.update({ where: { id }, data: { status: body.status } });
+  resolve(@Param('id') id: string, @Body() dto: ResolveDmReportDto) {
+    return this.service.resolve(id, dto);
+  }
+
+  @Get()
+  list() {
+    return this.service.list();
   }
 }
