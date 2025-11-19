@@ -128,7 +128,6 @@ export class ThreadsService {
       ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
     });
 
-    // 🔧 Fix: tránh lỗi "Object is possibly undefined"
     const last = items.length ? items[items.length - 1] : null;
     const nextCursor = last ? last.id : null;
 

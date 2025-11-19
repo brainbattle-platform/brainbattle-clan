@@ -1,4 +1,5 @@
-import { IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class SearchMessagesDto {
   @IsString()
@@ -10,6 +11,8 @@ export class SearchMessagesDto {
   cursor?: string;
 
   @IsOptional()
-  @IsString()
-  limit?: string; 
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  limit?: number;
 }

@@ -1,9 +1,9 @@
-import { IsBoolean, IsOptional } from 'class-validator';
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
 
 export class UpdateThreadSettingsDto {
   @IsOptional()
-  @IsBoolean()
-  muted?: boolean;
+  @IsString()
+  mutedUntil?: string | null;
 
   @IsOptional()
   @IsBoolean()

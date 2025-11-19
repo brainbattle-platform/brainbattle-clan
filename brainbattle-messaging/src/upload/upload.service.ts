@@ -25,13 +25,11 @@ export class UploadService {
   }
 
   async presign(userId: string, type: string, ext = 'bin', size?: number) {
-    // bạn có thể validate type/size ở đây
     const key = `users/${userId}/${Date.now()}-${randomUUID()}.${ext}`;
     const cmd = new PutObjectCommand({
       Bucket: this.bucket,
       Key: key,
       ContentType: type,
-      // ACL: 'public-read', // nếu dùng S3 public
     });
     const uploadUrl = await getSignedUrl(this.s3, cmd, { expiresIn: 300 });
     return {

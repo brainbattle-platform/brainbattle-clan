@@ -1,2 +1,7 @@
-import { IsString } from 'class-validator';
-export class CreateOneToOneDto { @IsString() peerId!: string; }
+import { IsNotEmpty, IsString } from 'class-validator';
+
+export class CreateOneToOneDto {
+  @IsString()
+  @IsNotEmpty()
+  peerId: string;
+}
