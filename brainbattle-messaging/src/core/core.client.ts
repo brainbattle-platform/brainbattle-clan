@@ -1,4 +1,3 @@
-// core/core.client.ts (trong brainbattle-messaging)
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';

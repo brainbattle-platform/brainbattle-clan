@@ -1,12 +1,13 @@
 // src/threads/threads.service.ts
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { CoreClient } from 'src/core/core.client';
 import { SearchMessagesDto } from './dto/search-messages.dto';
 
 
 @Injectable()
 export class ThreadsService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private prisma: PrismaService, private core: CoreClient,) { }
 
   /** Tạo khóa cặp user theo thứ tự để đảm bảo 1–1 duy nhất */
   private pairKey(a: string, b: string) {
@@ -14,6 +15,10 @@ export class ThreadsService {
   }
 
   async createOneToOne(me: string, peer: string) {
+    const block = await this.core.checkBlock(me, peer);
+    if (block.anyBlocked) {
+      throw new ForbiddenException('Cannot start DM: one party has blocked the other');
+    }
     if (me === peer) throw new ForbiddenException('cannot dm self');
 
     const pairKey = this.pairKey(me, peer);
@@ -72,7 +77,10 @@ export class ThreadsService {
   }
 
   async getOrCreateClanThread(me: string, clanId: string) {
-    // TODO (phase 2): call core to verify membership of `me` in clanId
+    const membership = await this.core.getClanMembership(clanId, me);
+    if (!membership.isMember || membership.status !== 'active') {
+      throw new ForbiddenException('You are not a member of this clan');
+    }
     let thread = await this.prisma.dMThread.findFirst({
       where: { kind: 'CLAN', clanId },
       select: { id: true },

@@ -1,0 +1,36 @@
+# Không copy node_modules/dist vào build context
+node_modules
+dist
+
+# Build output & cache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# IDE / editor
+.vscode
+.idea
+*.swp
+
+# Git & docs
+.git
+.gitignore
+README.md
+
+# Env & compose (chỉ dùng ở host)
+.env
+.env.*
+Dockerfile
+docker-compose.yml
+docker-compose.yaml
+compose.yml
+
+# Test / tooling / misc
+coverage
+test
+tests
+jest.config.*
+*.spec.ts
+*.test.ts

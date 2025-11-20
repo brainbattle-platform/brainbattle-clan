@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class SocialService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
   async follow(me: string, userId: string) {
     if (me === userId) throw new BadRequestException('cannot follow self');
     await this.prisma.follow.create({ data: { followerId: me, followeeId: userId } });
@@ -26,4 +26,16 @@ export class SocialService {
     await this.prisma.block.delete({ where: { blockerId_blockeeId: { blockerId: me, blockeeId: userId } } });
     return { ok: true };
   }
+  async isBlocked(a: string, b: string) {
+    const block = await this.prisma.block.findFirst({
+      where: {
+        OR: [
+          { blockerId: a, blockeeId: b },
+          { blockerId: b, blockeeId: a },
+        ],
+      },
+    });
+    return !!block;
+  }
+
 }

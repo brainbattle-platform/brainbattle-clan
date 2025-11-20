@@ -3,11 +3,11 @@ import { ThreadsController } from './threads.controller';
 import { ThreadsService } from './threads.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { HttpModule } from '@nestjs/axios';
-import { CoreClient } from '../core/core.client';
+import { CoreClient } from '../common/core-client';
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, HttpModule],
   controllers: [ThreadsController],
-  providers: [ThreadsService],
+  providers: [ThreadsService, CoreClient],
   exports: [ThreadsService],
 })
 export class ThreadsModule {}

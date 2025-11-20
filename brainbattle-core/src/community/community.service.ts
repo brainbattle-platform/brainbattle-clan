@@ -61,7 +61,7 @@ export class CommunityService {
     return { ok: true };
   }
 
-  
+
   async getMembership(clanId: string, userId: string) {
     const m = await this.prisma.clanMember.findUnique({
       where: { clanId_userId: { clanId, userId } },
@@ -83,5 +83,13 @@ export class CommunityService {
     if (!c) throw new NotFoundException();
     return c;
   }
+
+  async isMember(userId: string, clanId: string) {
+    const member = await this.prisma.clanMember.findUnique({
+      where: { clanId_userId: { clanId, userId } },
+    });
+    return !!member && member.status === 'active';
+  }
+
 
 }
