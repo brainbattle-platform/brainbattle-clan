@@ -1,45 +1,42 @@
-# ---------- STAGE 1: Builder ----------
-FROM node:20-alpine AS builder
-
-# Cài thêm vài thứ nếu prisma/native libs cần
-RUN apk add --no-cache openssl
-
+# Base image
+FROM node:20 as base
 WORKDIR /app
 
-# Copy file khai báo dependency trước để cache npm install
+# Copy package files
 COPY package*.json ./
 
-# Cài deps (dùng npm ci nếu lockfile chuẩn)
+# Install dependencies
 RUN npm install
 
-# Prisma schema & migrate scripts (để prisma generate có schema)
+# Copy Prisma schema
 COPY prisma ./prisma
 
 # Generate Prisma client
 RUN npx prisma generate
 
-# Copy toàn bộ source
+# Copy source code
 COPY . .
 
-# Build NestJS (ra thư mục dist/)
+# Build NestJS (creates dist/)
 RUN npm run build
 
 
-# ---------- STAGE 2: Runtime ----------
-FROM node:20-alpine AS runner
+
+# ==========================
+#  PRODUCTION IMAGE (SMALL)
+# ==========================
+FROM node:20
 
 WORKDIR /app
 
-# Copy node_modules & build output từ builder
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/prisma ./prisma
-COPY package*.json ./
+# Copy only necessary files from build stage
+COPY --from=base /app/node_modules ./node_modules
+COPY --from=base /app/dist ./dist
+COPY --from=base /app/prisma ./prisma
 
-ENV NODE_ENV=production
+# Prisma needs schema at runtime
+COPY --from=base /app/package*.json ./
 
-# Nếu muốn container tự chạy migrate mỗi khi start, dùng dòng dưới:
-# CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
+EXPOSE 3001
 
-# Nếu bạn migrate thủ công (đã làm rồi) thì dùng dòng đơn giản:
 CMD ["node", "dist/main.js"]

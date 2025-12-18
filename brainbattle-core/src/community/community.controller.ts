@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../common/jwt.guard';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CommunityService } from './community.service';
 import { ApproveJoinDto } from './dto/approve-join.dto'
 import { CreateClanDto } from './dto/create-clan.dto'

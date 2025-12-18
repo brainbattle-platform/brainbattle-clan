@@ -32,6 +32,7 @@ model DMThread {
   pairKey   String?    @unique
   clanId    String?
   createdAt DateTime   @default(now())
+  disabled Boolean @default(false)
 
   participants DMParticipant[] @relation("ThreadParticipants")
   messages     DMMessage[]     @relation("ThreadMessages")

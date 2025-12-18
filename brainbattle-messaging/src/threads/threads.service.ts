@@ -4,10 +4,12 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CoreClient } from 'src/core/core.client';
 import { SearchMessagesDto } from './dto/search-messages.dto';
 
-
 @Injectable()
 export class ThreadsService {
-  constructor(private prisma: PrismaService, private core: CoreClient,) { }
+  constructor(
+    private prisma: PrismaService,
+    private core: CoreClient,
+  ) {}
 
   /** Tạo khóa cặp user theo thứ tự để đảm bảo 1–1 duy nhất */
   private pairKey(a: string, b: string) {
@@ -17,7 +19,9 @@ export class ThreadsService {
   async createOneToOne(me: string, peer: string) {
     const block = await this.core.checkBlock(me, peer);
     if (block.anyBlocked) {
-      throw new ForbiddenException('Cannot start DM: one party has blocked the other');
+      throw new ForbiddenException(
+        'Cannot start DM: one party has blocked the other',
+      );
     }
     if (me === peer) throw new ForbiddenException('cannot dm self');
 
@@ -58,7 +62,12 @@ export class ThreadsService {
   }
 
   /** Lịch sử tin nhắn có phân trang cursor */
-  async getHistory(me: string, threadId: string, limit = 30, cursor?: string,) {
+  async getHistory(
+    me: string,
+    threadId: string,
+    limit = 30,
+    cursor?: string,
+  ) {
     await this.ensureParticipant(me, threadId);
 
     const take = Math.min(Math.max(limit, 1), 100);
@@ -105,11 +114,7 @@ export class ThreadsService {
     return this.getOrCreateClanThread(me, clanId);
   }
 
-  async searchMessages(
-    me: string,
-    threadId: string,
-    dto: SearchMessagesDto,
-  ) {
+  async searchMessages(me: string, threadId: string, dto: SearchMessagesDto) {
     await this.ensureParticipant(me, threadId);
 
     const q = dto.q?.trim();
@@ -142,13 +147,22 @@ export class ThreadsService {
     return { items, nextCursor };
   }
 
-
-  async updateSettings(me: string, threadId: string, dto: { mutedUntil?: string; pinned?: boolean; archived?: boolean }) {
+  async updateSettings(
+    me: string,
+    threadId: string,
+    dto: {
+      mutedUntil?: string;
+      pinned?: boolean;
+      archived?: boolean;
+    },
+  ) {
     await this.ensureParticipant(me, threadId);
     const data: any = {};
-    if (dto.mutedUntil !== undefined) data.mutedUntil = dto.mutedUntil ? new Date(dto.mutedUntil) : null;
+    if (dto.mutedUntil !== undefined)
+      data.mutedUntil = dto.mutedUntil ? new Date(dto.mutedUntil) : null;
     if (dto.pinned !== undefined) data.pinnedAt = dto.pinned ? new Date() : null;
-    if (dto.archived !== undefined) data.archivedAt = dto.archived ? new Date() : null;
+    if (dto.archived !== undefined)
+      data.archivedAt = dto.archived ? new Date() : null;
 
     const r = await this.prisma.dMUserThreadSetting.upsert({
       where: { threadId_userId: { threadId, userId: me } },
@@ -158,4 +172,48 @@ export class ThreadsService {
     return r;
   }
 
+  /** Đảm bảo tồn tại thread 1–1 giữa a và b, nếu bị disable thì bật lại */
+  async createOneToOneIfNotExists(a: string, b: string) {
+    const pairKey = this.pairKey(a, b);
+
+    let thread = await this.prisma.dMThread.findUnique({
+      where: { pairKey },
+    });
+
+    if (!thread) {
+      thread = await this.prisma.dMThread.create({
+        data: {
+          kind: 'ONE_TO_ONE',
+          pairKey,
+          participants: {
+            create: [{ userId: a }, { userId: b }],
+          },
+        },
+      });
+    }
+
+    if (thread.disabled) {
+      thread = await this.prisma.dMThread.update({
+        where: { id: thread.id },
+        data: { disabled: false },
+      });
+    }
+
+    return thread;
+  }
+
+  /** Disable thread 1–1 giữa a và b nhưng không xoá lịch sử */
+  async disableOneToOneThread(a: string, b: string) {
+    const pairKey = this.pairKey(a, b);
+
+    await this.prisma.dMThread.updateMany({
+      where: {
+        kind: 'ONE_TO_ONE',
+        pairKey,
+      },
+      data: {
+        disabled: true,
+      },
+    });
+  }
 }

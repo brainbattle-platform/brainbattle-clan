@@ -1,31 +1,30 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import * as Joi from 'joi';
-import { PrismaModule } from './prisma/prisma.module';
-import { ThreadsModule } from './threads/threads.module';
-import { ChatGateway } from './gateway/chat.gateway';
-import { RateLimitService } from './rate/rl.service';
-import { UploadModule } from './upload/upload.module';
-import { MessagesModule } from './messages/messages.module';
+import { HttpModule } from '@nestjs/axios';
 
+import { CoreClient } from './core/core.client';
+import { ThreadsModule } from './threads/threads.module';
+import { MessagesModule } from './messages/messages.module';
+import { PrismaModule } from './prisma/prisma.module';
+import { ModerationModule } from './moderation/moderation.module';
+import { UploadModule } from './upload/upload.module';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      validationSchema: Joi.object({
-        PORT: Joi.number().default(3002),
-        DATABASE_URL: Joi.string().required(),
-        REDIS_URL: Joi.string().required(),
-        JWT_ISSUER: Joi.string().required(),
-        JWT_AUDIENCE: Joi.string().required(),
-        JWT_PUBLIC_KEY_BASE64: Joi.string().required(),
-      }),
-    }),
+    ConfigModule.forRoot({ isGlobal: true }),
+    HttpModule,
     PrismaModule,
     ThreadsModule,
-    UploadModule,
     MessagesModule,
+    ModerationModule,
+    UploadModule,
   ],
-  providers: [ChatGateway, RateLimitService],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+  ],
 })
 export class AppModule {}

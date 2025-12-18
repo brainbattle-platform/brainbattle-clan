@@ -12,12 +12,20 @@ export class CoreClient {
     private readonly http: HttpService,
     cfg: ConfigService,
   ) {
-    this.base = cfg.get<string>('CORE_BASE_URL')!;          // ví dụ http://localhost:3001
-    this.apiKey = cfg.get<string>('CORE_INTERNAL_API_KEY')!; // dùng bảo mật nội bộ
+    this.base = cfg.get<string>('CORE_BASE_URL')!;            // ví dụ http://bb-core:3001
+    this.apiKey = cfg.get<string>('CORE_INTERNAL_API_KEY')!;  // dùng bảo mật nội bộ
   }
 
   private headers() {
     return { 'x-internal-api-key': this.apiKey };
+  }
+
+  // 🔥 FIXED: isMutual phải dùng firstValueFrom()
+  async isMutual(a: string, b: string) {
+    const res = await firstValueFrom(
+      this.http.get(`${this.base}/v1/internal/social/is-mutual/${a}/${b}`)
+    );
+    return res.data as { mutual: boolean };
   }
 
   async getClanMembership(clanId: string, userId: string) {

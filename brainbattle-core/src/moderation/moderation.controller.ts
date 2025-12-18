@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../common/jwt.guard';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { ModerationService } from './moderation.service';
 import { CreateReportDto } from './dto/create-report.dto';
 import { ResolveReportDto } from './dto/resolve-report.dto';
