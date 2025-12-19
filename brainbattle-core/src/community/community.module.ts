@@ -1,6 +1,15 @@
 import { Module } from '@nestjs/common';
-import { CommunityController } from './community.controller';
-import { CommunityService } from './community.service';
 import { PrismaService } from '../prisma/prisma.service';
-@Module({ controllers: [CommunityController], providers: [CommunityService, PrismaService] })
+import { SecurityModule } from '../security/security.module';
+import { EventsModule } from '../events/events.module';
+import { CommunityController } from './community.controller';
+import { CommunityInternalController } from './community.internal.controller';
+import { CommunityService } from './community.service';
+
+@Module({
+  imports: [SecurityModule, EventsModule],
+  controllers: [CommunityController, CommunityInternalController],
+  providers: [CommunityService, PrismaService],
+  exports: [CommunityService],
+})
 export class CommunityModule {}

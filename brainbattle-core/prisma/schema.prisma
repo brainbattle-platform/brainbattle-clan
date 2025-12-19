@@ -8,11 +8,19 @@ generator client {
 }
 
 model User {
-  id        String   @id
-  email     String   @unique
-  handle    String?  @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(cuid())
+  email      String?  @unique
+  handle     String?  @unique
+  displayName String?
+  avatarUrl  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  following  Follow[] @relation("following")
+  followers  Follow[] @relation("followers")
+
+  blocking   Block[]  @relation("blocking")
+  blockedBy  Block[]  @relation("blockedBy")
 }
 
 model Follow {
@@ -20,8 +28,12 @@ model Follow {
   followeeId String
   createdAt  DateTime @default(now())
 
+  follower   User @relation("following", fields: [followerId], references: [id], onDelete: Cascade)
+  followee   User @relation("followers", fields: [followeeId], references: [id], onDelete: Cascade)
+
   @@id([followerId, followeeId])
-  @@index([followeeId])
+  @@index([followeeId, createdAt])
+  @@index([followerId, createdAt])
 }
 
 model Block {
@@ -29,8 +41,14 @@ model Block {
   blockeeId String
   createdAt DateTime @default(now())
 
+  blocker   User @relation("blocking", fields: [blockerId], references: [id], onDelete: Cascade)
+  blockee   User @relation("blockedBy", fields: [blockeeId], references: [id], onDelete: Cascade)
+
   @@id([blockerId, blockeeId])
+  @@index([blockeeId, createdAt])
+  @@index([blockerId, createdAt])
 }
+
 
 model Clan {
   id         String   @id @default(cuid())
@@ -46,12 +64,13 @@ model Clan {
 model ClanMember {
   clanId   String
   userId   String
-  role     String // "leader" | "officer" | "member"
+  role     String // "leader" | "member"
   status   String // "active" | "banned" | "left"
   joinedAt DateTime @default(now())
 
   @@id([clanId, userId])
   @@index([userId])
+  @@index([clanId, status])
 }
 
 model ClanInvite {
@@ -61,31 +80,31 @@ model ClanInvite {
   inviteeId String?
   token     String   @unique
   expiresAt DateTime
-  status    String // "pending" | "accepted" | "revoked" | "expired"
+  status    String   // "pending" | "accepted" | "revoked" | "expired"
   createdAt DateTime @default(now())
 
   @@index([clanId])
 }
 
 model ClanJoinRequest {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   clanId      String
   requesterId String
-  status      String // "pending" | "approved" | "rejected"
+  status      String   // "pending" | "approved" | "rejected"
   reviewedBy  String?
   reviewedAt  DateTime?
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime @default(now())
 
+  @@unique([clanId, requesterId])
   @@index([clanId, status])
 }
-
 model Report {
-  id          String    @id @default(cuid())
-  subjectType String // "message" | "clan" | "user"
+  id          String   @id @default(cuid())
+  subjectType String   // "message" | "clan" | "user"
   subjectId   String
   reporterId  String
   reason      String
-  status      String // "open" | "resolved" | "invalid"
-  createdAt   DateTime  @default(now())
+  status      String   // "open" | "resolved" | "invalid"
+  createdAt   DateTime @default(now())
   resolvedAt  DateTime?
 }

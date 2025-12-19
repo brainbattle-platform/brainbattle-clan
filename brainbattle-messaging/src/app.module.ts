@@ -1,31 +1,19 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import * as Joi from 'joi';
-import { PrismaModule } from './prisma/prisma.module';
-import { ThreadsModule } from './threads/threads.module';
-import { ChatGateway } from './gateway/chat.gateway';
-import { RateLimitService } from './rate/rl.service';
-import { UploadModule } from './upload/upload.module';
-import { MessagesModule } from './messages/messages.module';
+import { SecurityModule } from './security/security.module';
+import { RedisModule } from './redis/redis.module';
+import { ConversationsModule } from './conversations/conversations.module';
+import { EventsModule } from './events/events.module';
+import { RealtimeModule } from './realtime/realtime.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      validationSchema: Joi.object({
-        PORT: Joi.number().default(3002),
-        DATABASE_URL: Joi.string().required(),
-        REDIS_URL: Joi.string().required(),
-        JWT_ISSUER: Joi.string().required(),
-        JWT_AUDIENCE: Joi.string().required(),
-        JWT_PUBLIC_KEY_BASE64: Joi.string().required(),
-      }),
-    }),
-    PrismaModule,
-    ThreadsModule,
-    UploadModule,
-    MessagesModule,
+    ConfigModule.forRoot({ isGlobal: true }),
+    SecurityModule,
+    RedisModule,
+    ConversationsModule,
+    EventsModule,      // start subscribing bb.events
+    RealtimeModule,    // socket gateway
   ],
-  providers: [ChatGateway, RateLimitService],
 })
 export class AppModule {}
