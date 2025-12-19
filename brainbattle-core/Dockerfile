@@ -1,42 +1,32 @@
-# Base image
-FROM node:20 as base
+# ==========================
+# BUILD STAGE
+# ==========================
+FROM node:20 AS build
 WORKDIR /app
 
-# Copy package files
 COPY package*.json ./
-
-# Install dependencies
 RUN npm install
 
-# Copy Prisma schema
 COPY prisma ./prisma
-
-# Generate Prisma client
-RUN npx prisma generate
-
-# Copy source code
 COPY . .
 
-# Build NestJS (creates dist/)
+RUN npx prisma generate
 RUN npm run build
 
-
-
 # ==========================
-#  PRODUCTION IMAGE (SMALL)
+# RUNTIME STAGE
 # ==========================
 FROM node:20
-
 WORKDIR /app
 
-# Copy only necessary files from build stage
-COPY --from=base /app/node_modules ./node_modules
-COPY --from=base /app/dist ./dist
-COPY --from=base /app/prisma ./prisma
+COPY package*.json ./
+RUN npm install --omit=dev
 
-# Prisma needs schema at runtime
-COPY --from=base /app/package*.json ./
+COPY prisma ./prisma
+COPY --from=build /app/dist ./dist
 
-EXPOSE 3001
+# 🔴 BẮT BUỘC: generate lại trong runtime image
+RUN npx prisma generate
 
+EXPOSE 3000
 CMD ["node", "dist/main.js"]

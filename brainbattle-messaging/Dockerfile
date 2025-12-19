@@ -1,33 +1,32 @@
-# ---------- STAGE 1: Builder ----------
-FROM node:20-alpine AS builder
-
-RUN apk add --no-cache openssl
-
+# ==========================
+# BUILD STAGE
+# ==========================
+FROM node:20 AS build
 WORKDIR /app
 
 COPY package*.json ./
 RUN npm install
 
 COPY prisma ./prisma
-RUN npx prisma generate
-
 COPY . .
+
+RUN npx prisma generate
 RUN npm run build
 
-
-# ---------- STAGE 2: Runtime ----------
-FROM node:20-alpine AS runner
-
+# ==========================
+# RUNTIME STAGE
+# ==========================
+FROM node:20
 WORKDIR /app
 
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/prisma ./prisma
 COPY package*.json ./
+RUN npm install --omit=dev
 
-ENV NODE_ENV=production
+COPY prisma ./prisma
+COPY --from=build /app/dist ./dist
 
-# Hoặc dùng migrate deploy nếu muốn:
-# CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
+# 🔴 BẮT BUỘC: generate lại trong runtime image
+RUN npx prisma generate
 
+EXPOSE 3000
 CMD ["node", "dist/main.js"]
