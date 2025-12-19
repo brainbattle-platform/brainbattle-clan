@@ -1,5 +1,5 @@
 import { Controller, Get, Param } from '@nestjs/common';
-import { SocialService } from './social-graph/social.service';
+import { SocialService } from './social/social.service';
 import { CommunityService } from './community/community.service';
 
 @Controller('internal')

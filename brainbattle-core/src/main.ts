@@ -11,9 +11,21 @@ async function bootstrap() {
   app.enableCors();
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
-  const cfg = new DocumentBuilder().setTitle('brainbattle-core').setVersion('v1').build();
-  const doc = SwaggerModule.createDocument(app, cfg);
-  SwaggerModule.setup('/docs', app, doc);
+  const config = new DocumentBuilder()
+    .setTitle('BrainBattle Core API')
+    .setDescription('Core service: social graph, clan, moderation')
+    .setVersion('1.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+      },
+      'access-token',
+    )
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('/docs', app, document);
 
   await app.listen(process.env.PORT || 3001);
 }

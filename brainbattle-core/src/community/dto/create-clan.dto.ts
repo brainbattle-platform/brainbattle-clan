@@ -1,10 +1,13 @@
-import { IsIn, IsNotEmpty, IsString } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsIn, IsString, MinLength } from 'class-validator';
 
 export class CreateClanDto {
+  @ApiProperty({ example: 'BrainBattle Vietnam' })
   @IsString()
-  @IsNotEmpty()
-  name: string;
+  @MinLength(3)
+  name!: string;
 
+  @ApiProperty({ enum: ['public', 'private'], example: 'public' })
   @IsIn(['public', 'private'])
-  visibility: 'public' | 'private';
+  visibility!: 'public' | 'private';
 }

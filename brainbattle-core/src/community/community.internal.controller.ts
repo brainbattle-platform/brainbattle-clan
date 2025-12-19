@@ -1,20 +1,19 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { CommunityService } from './community.service';
 
-@Controller('v1/internal/clans')
+@ApiTags('Internal Clan')
+@Controller('internal/clans')
 export class CommunityInternalController {
   constructor(private readonly service: CommunityService) {}
 
-  @Get(':clanId/members/:userId')
-  getMembership(
-    @Param('clanId') clanId: string,
-    @Param('userId') userId: string,
-  ) {
-    return this.service.getMembership(clanId, userId);
+  @Get(':clanId/lite')
+  lite(@Param('clanId') clanId: string) {
+    return this.service.getClanLite(clanId);
   }
 
-  @Get(':clanId/lite')
-  getLite(@Param('clanId') clanId: string) {
-    return this.service.getClanLite(clanId);
+  @Get(':clanId/membership')
+  membership(@Param('clanId') clanId: string, @Query('userId') userId: string) {
+    return this.service.getMembership(clanId, userId);
   }
 }

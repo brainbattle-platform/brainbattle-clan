@@ -1,7 +1,7 @@
 
 import { Module } from '@nestjs/common';
 import { AppConfigModule } from './config/config.module';
-import { SocialModule } from './social-graph/social.module';
+import { SocialModule } from './social/social.module';
 import { CommunityModule } from './community/community.module';
 import { ModerationModule } from './moderation/moderation.module';
 import { InternalController } from './internal.controller';
