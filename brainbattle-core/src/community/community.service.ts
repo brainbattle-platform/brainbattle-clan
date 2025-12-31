@@ -22,6 +22,20 @@ export class CommunityService {
 
   /* ================= helpers ================= */
 
+  validateClanName(name: string): void {
+    if (!name || typeof name !== 'string' || name.trim().length < 3) {
+      throw new BadRequestException('Clan name must be at least 3 characters');
+    }
+  }
+
+  normalizeClanSlug(name: string): string {
+    return slugify(name, { remove: /[^a-zA-Z0-9 -]/g }).toLowerCase();
+  }
+
+  isValidRole(role: string): boolean {
+    return ['leader', 'member', 'officer'].includes(role);
+  }
+
   private async getClanOrThrow(clanId: string) {
     const clan = await this.prisma.clan.findUnique({ where: { id: clanId } });
     if (!clan) throw new NotFoundException('Clan not found');
