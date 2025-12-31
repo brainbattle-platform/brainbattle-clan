@@ -12,11 +12,11 @@ describe('HealthController', () => {
     controller = module.get<HealthController>(HealthController);
   });
 
-  it('return status ok for health check', () => {
+  it('return status ok', () => {
     expect(controller.getHealth()).toEqual({ status: 'ok' });
   });
 
-  it('have status as string for health check', () => {
+  it('have status as string', () => {
     const result = controller.getHealth();
     expect(typeof result.status).toBe('string');
     expect(result.status).toBe('ok');
