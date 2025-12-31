@@ -232,5 +232,31 @@ graph TD
 
 ---
 
+## 🚀 CI/CD
+
+### Continuous Integration (CI)
+- Triggered on pull requests to `main` affecting `brainbattle-core/**` or the CI workflow.
+- Runs linting, unit tests, build, and end-to-end tests.
+- View logs in GitHub Actions under the "CI Clan" workflow.
+
+### Continuous Deployment (CD)
+- Triggered on pushes to `main` affecting `brainbattle-core/**` or the CD workflow.
+- Builds and pushes Docker image to GitHub Container Registry (GHCR).
+- Deploys to VPS by SSH, stopping/removing old container, pulling latest image, and running with environment file.
+
+### Required GitHub Secrets for CD
+- `VPS_HOST`: IP or hostname of the VPS.
+- `VPS_USER`: SSH username.
+- `VPS_SSH_KEY`: Private SSH key for authentication.
+- `GHCR_USER`: GitHub username for GHCR login.
+- `GHCR_PAT`: Personal Access Token with `read:packages` permission.
+
+### One-time VPS Setup
+1. Install Docker: `sudo apt update && sudo apt install -y docker.io`
+2. Create directory: `sudo mkdir -p /opt/brainbattle/clan`
+3. Create `.env` file: `sudo nano /opt/brainbattle/clan/.env` with necessary environment variables (e.g., database URL, JWT keys).
+
+---
+
 > © 2025 BrainBattle Platform — Core Microservice (v3.0)
 > Maintained by BrainBattle Core Infrastructure Team

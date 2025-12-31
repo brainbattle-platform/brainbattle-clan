@@ -1,5 +1,18 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtGuard } from '../security/jwt.guard';
 import { CommunityService } from './community.service';
 import { CreateClanDto } from './dto/create-clan.dto';
@@ -38,7 +51,11 @@ export class CommunityController {
 
   @ApiOperation({ summary: 'Approve join request (leader only)' })
   @Post(':clanId/approve')
-  approve(@Req() req: any, @Param('clanId') clanId: string, @Body() dto: ApproveJoinDto) {
+  approve(
+    @Req() req: any,
+    @Param('clanId') clanId: string,
+    @Body() dto: ApproveJoinDto,
+  ) {
     return this.service.approveJoin(req.user.id, clanId, dto.userId);
   }
 
@@ -51,7 +68,11 @@ export class CommunityController {
   @ApiOperation({ summary: 'Ban member (leader only)' })
   @ApiParam({ name: 'userId', description: 'Target member userId' })
   @Post(':clanId/ban/:userId')
-  ban(@Req() req: any, @Param('clanId') clanId: string, @Param('userId') userId: string) {
+  ban(
+    @Req() req: any,
+    @Param('clanId') clanId: string,
+    @Param('userId') userId: string,
+  ) {
     return this.service.banMember(req.user.id, clanId, userId);
   }
 }

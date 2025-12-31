@@ -1,6 +1,6 @@
 export type CoreUser = {
-  id: string;        
-  roles: string[];   
+  id: string;
+  roles: string[];
 };
 
 export type AccessTokenPayload = {

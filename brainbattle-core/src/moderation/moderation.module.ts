@@ -5,9 +5,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { SecurityModule } from '../security/security.module';
 
 @Module({
-  imports: [SecurityModule], 
+  imports: [SecurityModule],
   controllers: [ModerationController],
   providers: [ModerationService, PrismaService],
 })
 export class ModerationModule {}
-

@@ -11,7 +11,7 @@ export class SocialService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly events: CoreEventEmitter,
-  ) { }
+  ) {}
 
   /* ================= HELPERS ================= */
 
@@ -152,7 +152,11 @@ export class SocialService {
       });
     }
 
-    return { ok: true, alreadyBlocked: existed, removedFollows: { a2b: a2b.count, b2a: b2a.count } };
+    return {
+      ok: true,
+      alreadyBlocked: existed,
+      removedFollows: { a2b: a2b.count, b2a: b2a.count },
+    };
   }
 
   async unblock(me: string, userId: string) {
@@ -202,5 +206,4 @@ export class SocialService {
     });
     return !!row;
   }
-
 }

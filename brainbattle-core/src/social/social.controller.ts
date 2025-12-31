@@ -39,7 +39,9 @@ export class SocialController {
     return this.service.unfollow(req.user.id, userId);
   }
 
-  @ApiOperation({ summary: 'Block a user (also removes follow edges both ways)' })
+  @ApiOperation({
+    summary: 'Block a user (also removes follow edges both ways)',
+  })
   @ApiParam({ name: 'userId', description: 'Target user id' })
   @ApiResponse({ status: 200, description: 'Blocked (idempotent)' })
   @Post('blocks/:userId')

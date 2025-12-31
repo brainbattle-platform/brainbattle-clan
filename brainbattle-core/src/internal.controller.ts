@@ -10,10 +10,7 @@ export class InternalController {
   ) {}
 
   @Get('users/:me/blocked/:target')
-  async isBlocked(
-    @Param('me') me: string,
-    @Param('target') target: string,
-  ) {
+  async isBlocked(@Param('me') me: string, @Param('target') target: string) {
     const blocked = await this.social.isBlocked(me, target);
     return { blocked };
   }

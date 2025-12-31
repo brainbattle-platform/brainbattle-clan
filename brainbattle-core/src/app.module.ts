@@ -1,4 +1,3 @@
-
 import { Module } from '@nestjs/common';
 import { AppConfigModule } from './config/config.module';
 import { SocialModule } from './social/social.module';
@@ -8,8 +7,17 @@ import { InternalController } from './internal.controller';
 import { RedisModule } from './redis/redis.module';
 import { APP_GUARD } from '@nestjs/core';
 import { SecurityModule } from './security/security.module';
+import { HealthModule } from './health/health.module';
 @Module({
-  imports: [AppConfigModule, SocialModule, CommunityModule, ModerationModule, RedisModule,SecurityModule,],
+  imports: [
+    AppConfigModule,
+    SocialModule,
+    CommunityModule,
+    ModerationModule,
+    RedisModule,
+    SecurityModule,
+    HealthModule,
+  ],
   controllers: [InternalController],
 })
 export class AppModule {}

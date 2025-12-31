@@ -8,8 +8,8 @@ function fromBase64(b64?: string) {
 
 @Injectable()
 export class JwtVerifier {
-  private readonly issuer = process.env.JWT_ISSUER!;
-  private readonly audience = process.env.JWT_AUDIENCE!;
+  private readonly issuer = process.env.JWT_ISSUER;
+  private readonly audience = process.env.JWT_AUDIENCE;
   private readonly publicKey = fromBase64(process.env.JWT_PUBLIC_KEY_BASE64);
 
   verifyAccess(token: string): AccessTokenPayload {
@@ -24,7 +24,8 @@ export class JwtVerifier {
         audience: this.audience,
       }) as AccessTokenPayload;
 
-      if (!payload?.sub) throw new UnauthorizedException('Invalid token payload');
+      if (!payload?.sub)
+        throw new UnauthorizedException('Invalid token payload');
 
       return payload;
     } catch {
