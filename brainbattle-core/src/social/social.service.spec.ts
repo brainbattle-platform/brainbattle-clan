@@ -49,7 +49,9 @@ describe('SocialService', () => {
 
   describe('follow', () => {
     it('should throw for same user', async () => {
-      await expect(service.follow('user1', 'user1')).rejects.toThrow('cannot_follow_self');
+      await expect(service.follow('user1', 'user1')).rejects.toThrow(
+        'cannot_follow_self',
+      );
     });
 
     it('should throw if blocked', async () => {
@@ -59,10 +61,16 @@ describe('SocialService', () => {
 
     it('should return already followed if exists', async () => {
       mockPrisma.block.findFirst.mockResolvedValue(null);
-      mockPrisma.follow.findUnique.mockResolvedValueOnce({ followerId: 'user1' }); // hasFollow true
+      mockPrisma.follow.findUnique.mockResolvedValueOnce({
+        followerId: 'user1',
+      }); // hasFollow true
       mockPrisma.follow.findUnique.mockResolvedValueOnce(null); // mutual false
       const result = await service.follow('user1', 'user2');
-      expect(result).toEqual({ ok: true, mutual: false, alreadyFollowed: true });
+      expect(result).toEqual({
+        ok: true,
+        mutual: false,
+        alreadyFollowed: true,
+      });
       expect(mockPrisma.follow.create).not.toHaveBeenCalled();
     });
 
@@ -72,7 +80,11 @@ describe('SocialService', () => {
       mockPrisma.follow.create.mockResolvedValue({});
       mockPrisma.follow.findUnique.mockResolvedValue(null); // no mutual
       const result = await service.follow('user1', 'user2');
-      expect(result).toEqual({ ok: true, mutual: false, alreadyFollowed: false });
+      expect(result).toEqual({
+        ok: true,
+        mutual: false,
+        alreadyFollowed: false,
+      });
       expect(mockPrisma.follow.create).toHaveBeenCalledWith({
         data: { followerId: 'user1', followeeId: 'user2' },
       });
@@ -85,7 +97,9 @@ describe('SocialService', () => {
 
   describe('unfollow', () => {
     it('should throw for same user', async () => {
-      await expect(service.unfollow('user1', 'user1')).rejects.toThrow('cannot_unfollow_self');
+      await expect(service.unfollow('user1', 'user1')).rejects.toThrow(
+        'cannot_unfollow_self',
+      );
     });
 
     it('should delete follow and emit if exists', async () => {
@@ -109,7 +123,9 @@ describe('SocialService', () => {
 
   describe('block', () => {
     it('should throw for same user', async () => {
-      await expect(service.block('user1', 'user1')).rejects.toThrow('cannot_block_self');
+      await expect(service.block('user1', 'user1')).rejects.toThrow(
+        'cannot_block_self',
+      );
     });
 
     it('should create block if not exists and cleanup follows', async () => {
@@ -137,15 +153,22 @@ describe('SocialService', () => {
       mockPrisma.follow.deleteMany.mockResolvedValue({ count: 0 });
       await service.block('user1', 'user2');
       expect(mockPrisma.block.create).not.toHaveBeenCalled();
-      expect(mockEvents.emit).not.toHaveBeenCalledWith('social.block.created', expect.anything());
+      expect(mockEvents.emit).not.toHaveBeenCalledWith(
+        'social.block.created',
+        expect.anything(),
+      );
     });
   });
 
   it('should not throw for different users', () => {
-    expect(() => service['ensureNotSelf']('user1', 'user2', 'cannot follow self')).not.toThrow();
+    expect(() =>
+      service['ensureNotSelf']('user1', 'user2', 'cannot follow self'),
+    ).not.toThrow();
   });
 
   it('should throw for same user', () => {
-    expect(() => service['ensureNotSelf']('user1', 'user1', 'cannot follow self')).toThrow('cannot follow self');
+    expect(() =>
+      service['ensureNotSelf']('user1', 'user1', 'cannot follow self'),
+    ).toThrow('cannot follow self');
   });
 });

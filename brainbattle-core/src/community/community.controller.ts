@@ -13,10 +13,13 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
+import { Request } from 'express';
 import { JwtGuard } from '../security/jwt.guard';
 import { CommunityService } from './community.service';
 import { CreateClanDto } from './dto/create-clan.dto';
 import { ApproveJoinDto } from './dto/approve-join.dto';
+
+type AuthedRequest = Request & { user?: unknown };
 
 @ApiTags('Clan')
 @ApiBearerAuth()
@@ -27,8 +30,8 @@ export class CommunityController {
 
   @ApiOperation({ summary: 'Create clan' })
   @Post()
-  create(@Req() req: any, @Body() dto: CreateClanDto) {
-    return this.service.createClan(req.user.id, dto);
+  create(@Req() req: AuthedRequest, @Body() dto: CreateClanDto) {
+    return this.service.createClan((req.user as { id: string }).id, dto);
   }
 
   @ApiOperation({ summary: 'Get clan detail' })
@@ -45,34 +48,42 @@ export class CommunityController {
 
   @ApiOperation({ summary: 'Join clan (public auto-join, private -> request)' })
   @Post(':clanId/join')
-  join(@Req() req: any, @Param('clanId') clanId: string) {
-    return this.service.requestJoin(req.user.id, clanId);
+  join(@Req() req: AuthedRequest, @Param('clanId') clanId: string) {
+    return this.service.requestJoin((req.user as { id: string }).id, clanId);
   }
 
   @ApiOperation({ summary: 'Approve join request (leader only)' })
   @Post(':clanId/approve')
   approve(
-    @Req() req: any,
+    @Req() req: AuthedRequest,
     @Param('clanId') clanId: string,
     @Body() dto: ApproveJoinDto,
   ) {
-    return this.service.approveJoin(req.user.id, clanId, dto.userId);
+    return this.service.approveJoin(
+      (req.user as { id: string }).id,
+      clanId,
+      dto.userId,
+    );
   }
 
   @ApiOperation({ summary: 'Leave clan' })
   @Post(':clanId/leave')
-  leave(@Req() req: any, @Param('clanId') clanId: string) {
-    return this.service.leaveClan(req.user.id, clanId);
+  leave(@Req() req: AuthedRequest, @Param('clanId') clanId: string) {
+    return this.service.leaveClan((req.user as { id: string }).id, clanId);
   }
 
   @ApiOperation({ summary: 'Ban member (leader only)' })
   @ApiParam({ name: 'userId', description: 'Target member userId' })
   @Post(':clanId/ban/:userId')
   ban(
-    @Req() req: any,
+    @Req() req: AuthedRequest,
     @Param('clanId') clanId: string,
     @Param('userId') userId: string,
   ) {
-    return this.service.banMember(req.user.id, clanId, userId);
+    return this.service.banMember(
+      (req.user as { id: string }).id,
+      clanId,
+      userId,
+    );
   }
 }

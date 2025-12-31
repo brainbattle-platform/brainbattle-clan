@@ -154,7 +154,7 @@ export class CommunityService {
       throw new BadRequestException('already_in_clan');
     if (existing?.status === 'banned') throw new ForbiddenException('banned');
 
-    if ((clan as any).visibility === 'public') {
+    if ((clan as { visibility?: string }).visibility === 'public') {
       await this.prisma.clanMember.upsert({
         where: { clanId_userId: { clanId, userId: me } },
         update: { status: 'active', role: 'member' },
@@ -213,7 +213,7 @@ export class CommunityService {
     if (member?.status === 'banned')
       throw new ForbiddenException('user_banned');
 
-    if ((clan as any).visibility === 'private') {
+    if ((clan as { visibility?: string }).visibility === 'private') {
       const req = await this.prisma.clanJoinRequest.findFirst({
         where: { clanId, requesterId: userId, status: 'pending' },
       });
