@@ -3,10 +3,39 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-
 generator client {
   provider = "prisma-client-js"
+}
+
+
+enum ConversationType {
+  dm
+  clan
+}
+
+enum MessageKind {
+  text
+  attachment
+  system
+}
+
+enum AttachmentKind {
+  image
+  file
+}
+
+
+model Conversation {
+  id        String           @id @default(cuid())
+  type      ConversationType
+  clanId    String?          @unique
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  members   ConversationMember[]
+  messages  Message[]
+
+  @@index([type])
 }
 
 model ConversationMember {
@@ -20,34 +49,65 @@ model ConversationMember {
 
   @@id([conversationId, userId])
   @@index([userId, joinedAt])
-  @@index([conversationId, leftAt]) // ⭐ thêm
+  @@index([conversationId, leftAt])
 }
-
-model Conversation {
-  id        String   @id @default(cuid())
-  type      String
-  clanId    String?  @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  members   ConversationMember[]
-  messages  Message[]
-
-  @@index([type]) // ⭐ optional
-}
-
 
 model Message {
-  id             String   @id @default(cuid())
+  id             String      @id @default(cuid())
   conversationId String
-  senderId       String
-  content        String
-  createdAt      DateTime @default(now())
+  senderId       String?     // null for system
+  kind           MessageKind @default(text)
 
-  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  content        String?
+  systemPayload  Json?
+
+  createdAt      DateTime    @default(now())
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  attachments    Attachment[]
+  receipts       MessageReceipt[]
 
   @@index([conversationId, createdAt])
+  @@index([senderId, createdAt])
 }
+
+model Attachment {
+  id        String         @id @default(cuid())
+  messageId String
+  kind      AttachmentKind
+  mime      String
+  size      Int
+
+  bucket    String
+  objectKey String
+  url       String?        // optional: nếu muốn store public url / cached url
+
+  width     Int?           // for image (optional)
+  height    Int?           // for image (optional)
+
+  createdAt DateTime       @default(now())
+
+  message   Message        @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@index([objectKey])
+}
+
+
+model MessageReceipt {
+  messageId   String
+  userId      String
+  deliveredAt DateTime?
+  readAt      DateTime?
+  createdAt   DateTime @default(now())
+
+  message     Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@id([messageId, userId])
+  @@index([userId, deliveredAt])
+  @@index([userId, readAt])
+}
+
 
 model ReadReceipt {
   conversationId String
@@ -55,9 +115,22 @@ model ReadReceipt {
   lastReadAt     DateTime @default(now())
 
   @@id([conversationId, userId])
+  @@index([userId, lastReadAt])
 }
 
 model DmKey {
   key            String @id   // min(a,b):max(a,b)
   conversationId String @unique
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  payload   Json
+  createdAt DateTime @default(now())
+  readAt    DateTime?
+
+  @@index([userId])
+  @@index([userId, createdAt])
 }

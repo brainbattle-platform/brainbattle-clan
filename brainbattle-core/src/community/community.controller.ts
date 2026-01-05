@@ -22,7 +22,7 @@ import { ApproveJoinDto } from './dto/approve-join.dto';
 type AuthedRequest = Request & { user?: unknown };
 
 @ApiTags('Clan')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @UseGuards(JwtGuard)
 @Controller('v1/clans')
 export class CommunityController {

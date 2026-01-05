@@ -7,6 +7,11 @@ export type BbEvent<T extends string, D> = {
   source: 'core';
   data: D;
 };
+export type SocialFollowCreated = BbEvent<
+  'social.follow.created',
+  { followerId: string; followeeId: string }
+>;
+
 
 export type SocialFollowMutual = BbEvent<
   'social.follow.mutual',
@@ -25,8 +30,10 @@ export type ClanMemberBanned = BbEvent<
 >;
 
 export type AnyCoreEvent =
+  | SocialFollowCreated
   | SocialFollowMutual
   | ClanCreated
   | ClanMemberJoined
   | ClanMemberLeft
   | ClanMemberBanned;
+

@@ -75,6 +75,10 @@ export class SocialService {
       followeeId: userId,
     });
 
+    console.log(
+      '[CORE] publish social.follow.created',
+      { followerId: me, followeeId: userId },
+    );
     // Mutual only when creating the 2nd edge
     const mutual = await this.hasFollow(userId, me);
     if (mutual) {

@@ -18,30 +18,39 @@ export class ConversationsService {
     if (existing) return existing.conversationId;
 
     // 2) Create conversation + members + dmKey in transaction
-    const created = await this.prisma.$transaction(async (tx) => {
-      // check again inside tx
-      const again = await tx.dmKey.findUnique({ where: { key } });
-      if (again) return again.conversationId;
+    try {
+      const created = await this.prisma.$transaction(async (tx) => {
+        // check again inside tx
+        const again = await tx.dmKey.findUnique({ where: { key } });
+        if (again) return again.conversationId;
 
-      const conv = await tx.conversation.create({
-        data: { type: 'dm' },
+        const conv = await tx.conversation.create({
+          data: { type: 'dm' },
+        });
+
+        await tx.conversationMember.createMany({
+          data: [
+            { conversationId: conv.id, userId: userAId },
+            { conversationId: conv.id, userId: userBId },
+          ],
+        });
+
+        await tx.dmKey.create({
+          data: { key, conversationId: conv.id },
+        });
+
+        return conv.id;
       });
 
-      await tx.conversationMember.createMany({
-        data: [
-          { conversationId: conv.id, userId: userAId },
-          { conversationId: conv.id, userId: userBId },
-        ],
-      });
-
-      await tx.dmKey.create({
-        data: { key, conversationId: conv.id },
-      });
-
-      return conv.id;
-    });
-
-    return created;
+      return created;
+    } catch (e: any) {
+      // Handle unique constraint races (another worker created the DM concurrently)
+      if ((e as any)?.code === 'P2002') {
+        const existing2 = await this.prisma.dmKey.findUnique({ where: { key } });
+        if (existing2) return existing2.conversationId;
+      }
+      throw e;
+    }
   }
 
   async ensureClanConversation(clanId: string, leaderId?: string) {
