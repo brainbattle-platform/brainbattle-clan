@@ -1,9 +1,9 @@
-import { IsIn, IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateReportDto {
   @IsString()
   @IsNotEmpty()
-  subjectType: string;    
+  subjectType: string;
   @IsString()
   @IsNotEmpty()
   subjectId: string;

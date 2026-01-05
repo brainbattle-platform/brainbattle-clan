@@ -1,13 +1,12 @@
 export const BB_EVENT_CHANNEL = 'bb.events' as const;
 
 export type BbEvent<T extends string, D> = {
-  id: string;       
-  type: T;           
-  ts: string;        
-  source: 'core';    
+  id: string;
+  type: T;
+  ts: string;
+  source: 'core';
   data: D;
 };
-
 
 export type SocialFollowCreated = BbEvent<
   'social.follow.created',
@@ -64,5 +63,3 @@ export type AnyCoreEvent =
   | ClanMemberJoined
   | ClanMemberLeft
   | ClanMemberBanned;
-
-
