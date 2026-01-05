@@ -3,8 +3,10 @@ import { Reflector } from '@nestjs/core';
 import { JwtVerifier } from './jwt-verifier';
 import { JwtGuard } from './jwt.guard';
 import { PermissionsGuard } from './permissions.guard';
+import { JwksController } from './jwks.controller';
 
 @Module({
+  controllers: [JwksController],
   providers: [Reflector, JwtVerifier, JwtGuard, PermissionsGuard],
   exports: [JwtGuard, PermissionsGuard, JwtVerifier],
 })

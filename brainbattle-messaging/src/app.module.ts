@@ -5,6 +5,7 @@ import { RedisModule } from './redis/redis.module';
 import { ConversationsModule } from './conversations/conversations.module';
 import { EventsModule } from './events/events.module';
 import { RealtimeModule } from './realtime/realtime.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -12,8 +13,9 @@ import { RealtimeModule } from './realtime/realtime.module';
     SecurityModule,
     RedisModule,
     ConversationsModule,
-    EventsModule,      // start subscribing bb.events
-    RealtimeModule,    // socket gateway
+    NotificationsModule,
+    EventsModule,
+    RealtimeModule,
   ],
 })
-export class AppModule {}
+export class AppModule { }

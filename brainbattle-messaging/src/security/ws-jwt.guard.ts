@@ -5,7 +5,7 @@ import { JwtVerifier } from './jwt-verify';
 export class WsJwtGuard implements CanActivate {
   constructor(private readonly verifier: JwtVerifier) {}
 
-  canActivate(ctx: ExecutionContext): boolean {
+  async canActivate(ctx: ExecutionContext): Promise<boolean> {
     const client: any = ctx.switchToWs().getClient();
     const token =
       client?.handshake?.auth?.token ||
@@ -16,7 +16,7 @@ export class WsJwtGuard implements CanActivate {
 
     if (!token) throw new UnauthorizedException('Missing socket token');
 
-    const payload = this.verifier.verifyAccess(token);
+    const payload = await this.verifier.verifyAccess(token);
     client.data.user = { id: payload.sub, roles: payload.roles ?? [] };
     return true;
   }

@@ -5,7 +5,7 @@ import { JwtVerifier } from './jwt-verify';
 export class HttpJwtGuard implements CanActivate {
   constructor(private readonly verifier: JwtVerifier) {}
 
-  canActivate(ctx: ExecutionContext): boolean {
+  async canActivate(ctx: ExecutionContext): Promise<boolean> {
     const req = ctx.switchToHttp().getRequest();
     const header = req.headers?.authorization;
 
@@ -14,7 +14,7 @@ export class HttpJwtGuard implements CanActivate {
     }
 
     const token = header.slice(7);
-    const payload = this.verifier.verifyAccess(token);
+    const payload = await this.verifier.verifyAccess(token);
 
     req.user = { id: payload.sub, roles: payload.roles ?? [] };
     return true;

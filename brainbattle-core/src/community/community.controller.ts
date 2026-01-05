@@ -6,7 +6,7 @@ import { CreateClanDto } from './dto/create-clan.dto';
 import { ApproveJoinDto } from './dto/approve-join.dto';
 
 @ApiTags('Clan')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @UseGuards(JwtGuard)
 @Controller('v1/clans')
 export class CommunityController {
