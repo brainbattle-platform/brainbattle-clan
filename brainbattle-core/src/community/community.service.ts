@@ -355,7 +355,6 @@ export class CommunityService {
     // Tìm invite link
     const invite = await this.prisma.clanInvite.findFirst({
       where: { token },
-      include: { clan: true },
     });
 
     // Validate token
@@ -370,8 +369,15 @@ export class CommunityService {
       throw new BadRequestException('Invite link expired');
     }
 
-    const clan = invite.clan as any;
-    const clanId = clan.id;
+    const clanId = invite.clanId;
+
+    // Get clan info
+    const clan = await this.prisma.clan.findUnique({
+      where: { id: clanId },
+      select: { id: true, name: true },
+    });
+
+    if (!clan) throw new NotFoundException('Clan not found');
 
     // Check if user already in clan
     const existing = await this.getMember(clanId, userId);

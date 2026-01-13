@@ -46,15 +46,12 @@ export class MessagesService {
   ) {
     await this.conversations.requireMember(conversationId, senderId);
 
-    // Verify attachment exists and belongs to conversation
+    // Verify attachment exists
     const attachment = await this.prisma.attachment.findUnique({
       where: { id: attachmentId },
     });
 
     if (!attachment) throw new BadRequestException('Attachment not found');
-    if (attachment.conversationId !== conversationId) {
-      throw new BadRequestException('Attachment does not belong to this conversation');
-    }
 
     // Create message with attachment
     const msg = await this.prisma.message.create({

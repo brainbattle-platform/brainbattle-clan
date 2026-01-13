@@ -1,5 +1,6 @@
 import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 
 /**
  * Admin service - Quản lý clans, users, reports
@@ -16,11 +17,11 @@ export class AdminService {
    * Admin only
    */
   async listClans(skip?: number, take?: number, search?: string) {
-    const where = search
+    const where: Prisma.ClanWhereInput = search
       ? {
           OR: [
-            { name: { contains: search, mode: 'insensitive' } },
-            { slug: { contains: search, mode: 'insensitive' } },
+            { name: { contains: search, mode: Prisma.QueryMode.insensitive } },
+            { slug: { contains: search, mode: Prisma.QueryMode.insensitive } },
           ],
         }
       : {};
@@ -153,12 +154,12 @@ export class AdminService {
    * List all users
    */
   async listUsers(skip?: number, take?: number, search?: string) {
-    const where = search
+    const where: Prisma.UserWhereInput = search
       ? {
           OR: [
-            { email: { contains: search, mode: 'insensitive' } },
-            { displayName: { contains: search, mode: 'insensitive' } },
-            { handle: { contains: search, mode: 'insensitive' } },
+            { email: { contains: search, mode: Prisma.QueryMode.insensitive } },
+            { displayName: { contains: search, mode: Prisma.QueryMode.insensitive } },
+            { handle: { contains: search, mode: Prisma.QueryMode.insensitive } },
           ],
         }
       : {};
