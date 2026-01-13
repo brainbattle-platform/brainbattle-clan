@@ -6,6 +6,7 @@ import { ConversationsModule } from './conversations/conversations.module';
 import { EventsModule } from './events/events.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { AttachmentsModule } from './attachments/attachments.module';
 
 @Module({
   imports: [
@@ -16,6 +17,8 @@ import { NotificationsModule } from './notifications/notifications.module';
     NotificationsModule,
     EventsModule,
     RealtimeModule,
+    AttachmentsModule,
   ],
 })
 export class AppModule { }
+
