@@ -307,7 +307,6 @@ export class CommunityService {
     });
     return !!member && member.status === 'active';
   }
-<<<<<<< HEAD
 
   /* ================= INVITE LINK MANAGEMENT ================= */
 
@@ -617,8 +616,6 @@ export class CommunityService {
     }
     return token;
   }
-=======
->>>>>>> main
 
   ping(): string {
     return 'pong';

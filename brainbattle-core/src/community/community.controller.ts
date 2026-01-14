@@ -1,24 +1,5 @@
-<<<<<<< HEAD
 import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-=======
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiParam,
-  ApiTags,
-} from '@nestjs/swagger';
-import { Request } from 'express';
->>>>>>> main
 import { JwtGuard } from '../security/jwt.guard';
 import { CommunityService } from './community.service';
 import { CreateClanDto } from './dto/create-clan.dto';

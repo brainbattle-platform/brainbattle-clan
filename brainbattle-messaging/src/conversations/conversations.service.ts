@@ -53,26 +53,19 @@ export class ConversationsService {
     }
   }
 
-  async ensureClanConversation(clanId: string, leaderId?: string) {
+  async ensureClanConversation(clanId: string, title?: string) {
     const existing = await this.prisma.conversation.findFirst({
       where: { type: 'clan', clanId },
-      select: { id: true },
+      select: { id: true, title: true, clanId: true },
     });
-    if (existing) return existing.id;
+    if (existing) return existing;
 
     const conv = await this.prisma.conversation.create({
-      data: { type: 'clan', clanId },
+      data: { type: 'clan', clanId, title: title || `Clan ${clanId}` },
+      select: { id: true, title: true, clanId: true },
     });
 
-    if (leaderId) {
-      await this.prisma.conversationMember.upsert({
-        where: { conversationId_userId: { conversationId: conv.id, userId: leaderId } },
-        update: { leftAt: null },
-        create: { conversationId: conv.id, userId: leaderId },
-      });
-    }
-
-    return conv.id;
+    return conv;
   }
 
   async upsertClanMember(clanId: string, userId: string) {
@@ -82,11 +75,11 @@ export class ConversationsService {
     });
     if (!conv) {
       // nếu event join đến trước event create (hiếm), vẫn tạo
-      const convId = await this.ensureClanConversation(clanId);
+      const newConv = await this.ensureClanConversation(clanId);
       await this.prisma.conversationMember.upsert({
-        where: { conversationId_userId: { conversationId: convId, userId } },
+        where: { conversationId_userId: { conversationId: newConv.id, userId } },
         update: { leftAt: null },
-        create: { conversationId: convId, userId },
+        create: { conversationId: newConv.id, userId },
       });
       return;
     }
@@ -195,5 +188,84 @@ export class ConversationsService {
       orderBy: { joinedAt: 'asc' },
     });
     return members;
+  }
+
+  /**
+   * Ensure DM conversation exists for given member IDs
+   * Returns full conversation object
+   */
+  async ensureDmConversation(memberIds: string[], title?: string) {
+    if (memberIds.length < 2) throw new BadRequestException('dm_requires_2_members');
+
+    const sortedIds = memberIds.sort();
+    const key = sortedIds.join(':');
+
+    // Check if DM already exists
+    const existing = await this.prisma.dmKey.findUnique({ where: { key } });
+    if (existing) {
+      const conv = await this.prisma.conversation.findUnique({
+        where: { id: existing.conversationId },
+        select: { id: true, title: true, clanId: true },
+      });
+      return conv!;
+    }
+
+    // Create DM conversation with members
+    try {
+      const created = await this.prisma.$transaction(async (tx) => {
+        const again = await tx.dmKey.findUnique({ where: { key } });
+        if (again) {
+          return await tx.conversation.findUnique({
+            where: { id: again.conversationId },
+            select: { id: true, title: true, clanId: true },
+          });
+        }
+
+        const conv = await tx.conversation.create({
+          data: { type: 'dm', title: title || 'Direct Message' },
+          select: { id: true, title: true, clanId: true },
+        });
+
+        await tx.conversationMember.createMany({
+          data: memberIds.map(userId => ({
+            conversationId: conv.id,
+            userId,
+          })),
+        });
+
+        await tx.dmKey.create({
+          data: { key, conversationId: conv.id },
+        });
+
+        return conv;
+      });
+
+      return created!;
+    } catch (e: any) {
+      // Handle concurrent DM creation
+      if ((e as any)?.code === 'P2002') {
+        const existing2 = await this.prisma.dmKey.findUnique({ where: { key } });
+        if (existing2) {
+          const conv = await this.prisma.conversation.findUnique({
+            where: { id: existing2.conversationId },
+            select: { id: true, title: true, clanId: true },
+          });
+          return conv!;
+        }
+      }
+      throw e;
+    }
+  }
+
+  /**
+   * Add a member to an existing conversation
+   * Reactivates member if previously left
+   */
+  async addMember(conversationId: string, userId: string) {
+    await this.prisma.conversationMember.upsert({
+      where: { conversationId_userId: { conversationId, userId } },
+      update: { leftAt: null },
+      create: { conversationId, userId },
+    });
   }
 }

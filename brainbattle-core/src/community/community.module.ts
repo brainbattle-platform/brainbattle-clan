@@ -9,7 +9,6 @@ import { CommunityApiController } from './community-api.controller';
 import { CommunityService } from './community.service';
 
 @Module({
-<<<<<<< Updated upstream
   imports: [
     SecurityModule,
     EventsModule,
@@ -23,10 +22,6 @@ import { CommunityService } from './community.service';
     CommunityInternalController,
     CommunityApiController,
   ],
-=======
-  imports: [SecurityModule, EventsModule],
-  controllers: [CommunityController, CommunityInternalController, CommunityApiController],
->>>>>>> Stashed changes
   providers: [CommunityService, PrismaService],
   exports: [CommunityService],
 })

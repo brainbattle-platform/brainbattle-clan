@@ -51,7 +51,6 @@ model Block {
 
 
 model Clan {
-<<<<<<< Updated upstream
   id          String   @id @default(cuid())
   name        String
   slug        String   @unique
@@ -62,20 +61,10 @@ model Clan {
   settings    Json?
   createdBy   String
   createdAt   DateTime @default(now())
-=======
-  id         String   @id @default(cuid())
-  name       String
-  slug       String   @unique
-  visibility String // "public" | "private"
-  coverUrl   String?
-  settings   Json?
-  createdBy  String
-  createdAt  DateTime @default(now())
-  
-  members    ClanMember[]
-  invites    ClanInvite[]
+
+  members     ClanMember[]
+  invites     ClanInvite[]
   joinRequests ClanJoinRequest[]
->>>>>>> Stashed changes
 }
 
 model ClanMember {

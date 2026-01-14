@@ -4,7 +4,8 @@
 
 export interface UserLiteDto {
   id: string;
-  name: string;
+  handle: string;
+  displayName: string;
   avatarUrl?: string;
   isActiveNow?: boolean;
   lastActiveAt?: string; // ISO8601
@@ -12,12 +13,14 @@ export interface UserLiteDto {
 
 export interface AttachmentDto {
   id: string;
-  type: 'image' | 'file' | 'link' | 'video';
+  type: 'image' | 'file' | 'link';
   url: string;
   thumbnailUrl?: string;
   fileName?: string;
   sizeBytes?: number;
   mimeType?: string;
+  width?: number;
+  height?: number;
 }
 
 export interface MessageDto {
@@ -47,9 +50,12 @@ export interface ThreadDto {
  * Map user to UserLiteDto
  */
 export function toUserLiteDto(user: any): UserLiteDto {
+  const id = user.id || user.userId;
+  const displayName = user.displayName || user.name || user.username || id;
   return {
-    id: user.id || user.userId,
-    name: user.name || user.username || `User ${(user.id || '').slice(0, 4)}`,
+    id,
+    handle: user.handle || id,
+    displayName,
     avatarUrl: user.avatarUrl,
     isActiveNow: user.isActiveNow,
     lastActiveAt: user.lastActiveAt
@@ -64,14 +70,20 @@ export function toUserLiteDto(user: any): UserLiteDto {
  * Map attachment to AttachmentDto
  */
 export function toAttachmentDto(att: any): AttachmentDto {
+  let type: 'image' | 'file' | 'link' = 'file';
+  if (att.kind === 'image') type = 'image';
+  else if (att.kind === 'link') type = 'link';
+
   return {
     id: att.id,
-    type: att.type || 'file',
-    url: att.url,
-    thumbnailUrl: att.thumbnailUrl,
-    fileName: att.fileName,
-    sizeBytes: att.sizeBytes,
-    mimeType: att.mimeType,
+    type,
+    url: att.url || att.objectKey,
+    thumbnailUrl: att.thumbnailUrl || undefined,
+    fileName: att.fileName || undefined,
+    sizeBytes: att.size ?? att.sizeBytes ?? undefined,
+    mimeType: att.mime || att.mimeType || undefined,
+    width: att.width,
+    height: att.height,
   };
 }
 
