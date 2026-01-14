@@ -22,19 +22,39 @@ export class CommunityService {
 
   /* ================= helpers ================= */
 
+  validateClanName(name: string): void {
+    if (!name || typeof name !== 'string' || name.trim().length < 3) {
+      throw new BadRequestException('Clan name must be at least 3 characters');
+    }
+  }
+
+  normalizeClanSlug(name: string): string {
+    return slugify(name, { remove: /[^a-zA-Z0-9 -]/g }).toLowerCase();
+  }
+
+  isValidRole(role: string): boolean {
+    return ['leader', 'member', 'officer'].includes(role);
+  }
+
   private async getClanOrThrow(clanId: string) {
     const clan = await this.prisma.clan.findUnique({ where: { id: clanId } });
     if (!clan) throw new NotFoundException('Clan not found');
-    return clan as any as { id: string; visibility: Visibility; createdBy: string };
+    return clan as {
+      id: string;
+      visibility: Visibility;
+      createdBy: string;
+    };
   }
 
   private async getMember(clanId: string, userId: string) {
     return this.prisma.clanMember.findUnique({
       where: { clanId_userId: { clanId, userId } },
-    }) as any as Promise<
-      | null
-      | { clanId: string; userId: string; role: Role; status: MemberStatus }
-    >;
+    }) as Promise<null | {
+      clanId: string;
+      userId: string;
+      role: Role;
+      status: MemberStatus;
+    }>;
   }
 
   private async requireLeader(clanId: string, actorId: string) {
@@ -53,7 +73,8 @@ export class CommunityService {
   }
 
   private ensureVisibility(v: string): asserts v is Visibility {
-    if (v !== 'public' && v !== 'private') throw new BadRequestException('invalid_visibility');
+    if (v !== 'public' && v !== 'private')
+      throw new BadRequestException('invalid_visibility');
   }
 
   /* ================= use-cases ================= */
@@ -98,7 +119,13 @@ export class CommunityService {
   async getClanLite(clanId: string) {
     const c = await this.prisma.clan.findUnique({
       where: { id: clanId },
-      select: { id: true, name: true, slug: true, visibility: true, createdBy: true },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        visibility: true,
+        createdBy: true,
+      },
     });
     if (!c) throw new NotFoundException('Clan not found');
     return c;
@@ -123,10 +150,11 @@ export class CommunityService {
     const clan = await this.getClanOrThrow(clanId);
 
     const existing = await this.getMember(clanId, me);
-    if (existing?.status === 'active') throw new BadRequestException('already_in_clan');
+    if (existing?.status === 'active')
+      throw new BadRequestException('already_in_clan');
     if (existing?.status === 'banned') throw new ForbiddenException('banned');
 
-    if ((clan as any).visibility === 'public') {
+    if ((clan as { visibility?: string }).visibility === 'public') {
       await this.prisma.clanMember.upsert({
         where: { clanId_userId: { clanId, userId: me } },
         update: { status: 'active', role: 'member' },
@@ -149,13 +177,22 @@ export class CommunityService {
 
     if (existedReq) {
       // nếu trước đó rejected, cho phép gửi lại -> pending
-      if ((existedReq as any).status !== 'pending') {
+      if (existedReq.status !== 'pending') {
         await this.prisma.clanJoinRequest.update({
           where: { id: existedReq.id },
-          data: { status: 'pending' as JoinStatus, reviewedBy: null, reviewedAt: null },
+          data: {
+            status: 'pending' as JoinStatus,
+            reviewedBy: null,
+            reviewedAt: null,
+          },
         });
       }
-      return { ok: true, joined: false, pending: true, requestId: existedReq.id };
+      return {
+        ok: true,
+        joined: false,
+        pending: true,
+        requestId: existedReq.id,
+      };
     }
 
     const req = await this.prisma.clanJoinRequest.create({
@@ -173,9 +210,10 @@ export class CommunityService {
     const clan = await this.getClanOrThrow(clanId);
 
     const member = await this.getMember(clanId, userId);
-    if (member?.status === 'banned') throw new ForbiddenException('user_banned');
+    if (member?.status === 'banned')
+      throw new ForbiddenException('user_banned');
 
-    if ((clan as any).visibility === 'private') {
+    if ((clan as { visibility?: string }).visibility === 'private') {
       const req = await this.prisma.clanJoinRequest.findFirst({
         where: { clanId, requesterId: userId, status: 'pending' },
       });
@@ -220,7 +258,8 @@ export class CommunityService {
       const others = await this.prisma.clanMember.count({
         where: { clanId, status: 'active', NOT: { userId: me } },
       });
-      if (others > 0) throw new BadRequestException('leader_cannot_leave_with_members');
+      if (others > 0)
+        throw new BadRequestException('leader_cannot_leave_with_members');
     }
 
     await this.prisma.clanMember.update({
@@ -245,14 +284,19 @@ export class CommunityService {
 
     const target = await this.getMember(clanId, userId);
     if (!target) throw new NotFoundException('Member not found');
-    if (target.role === 'leader') throw new ForbiddenException('cannot_ban_leader');
+    if (target.role === 'leader')
+      throw new ForbiddenException('cannot_ban_leader');
 
     await this.prisma.clanMember.update({
       where: { clanId_userId: { clanId, userId } },
       data: { status: 'banned' },
     });
 
-    await this.events.emit('clan.member.banned', { clanId, userId, by: 'leader' });
+    await this.events.emit('clan.member.banned', {
+      clanId,
+      userId,
+      by: 'leader',
+    });
 
     return { ok: true };
   }
@@ -263,6 +307,7 @@ export class CommunityService {
     });
     return !!member && member.status === 'active';
   }
+<<<<<<< HEAD
 
   /* ================= INVITE LINK MANAGEMENT ================= */
 
@@ -572,5 +617,10 @@ export class CommunityService {
     }
     return token;
   }
+=======
+>>>>>>> main
 
+  ping(): string {
+    return 'pong';
+  }
 }
