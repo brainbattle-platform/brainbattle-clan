@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Patch, Delete, Param, Query, Body, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Query, Body, Req, UseGuards, HttpCode } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtGuard } from '../security/jwt.guard';
+import { AdminGuard } from '../security/admin.guard';
 import { AdminService } from './admin.service';
 import { UpdateReportStatusDto } from './dto/update-report-status.dto';
 import { AdminListClansQueryDto, AdminListUsersQueryDto, AdminListReportsQueryDto } from './dto/admin-query.dto';
@@ -8,11 +9,11 @@ import { AdminListClansQueryDto, AdminListUsersQueryDto, AdminListReportsQueryDt
 /**
  * Admin Controller
  * All endpoints require admin role
- * In production, add AdminGuard to verify admin status
+ * AdminGuard added to verify admin status in JWT
  */
 @ApiTags('Admin')
 @ApiBearerAuth('access-token')
-@UseGuards(JwtGuard)
+@UseGuards(JwtGuard, AdminGuard)
 @Controller('v1/admin')
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
@@ -81,6 +82,22 @@ export class AdminController {
     @Param('clanId') clanId: string,
   ) {
     return this.adminService.unbanUserFromClan(userId, clanId);
+  }
+
+  @ApiOperation({ summary: 'Edit user (admin only)' })
+  @Patch('users/:userId')
+  async editUser(
+    @Param('userId') userId: string,
+    @Body() data: any,
+  ) {
+    return this.adminService.editUser(userId, data);
+  }
+
+  @ApiOperation({ summary: 'Delete user (admin only)' })
+  @Delete('users/:userId')
+  @HttpCode(200)
+  async deleteUser(@Param('userId') userId: string) {
+    return this.adminService.deleteUserAdminAction(userId);
   }
 
   /* ================= REPORT MANAGEMENT ================= */

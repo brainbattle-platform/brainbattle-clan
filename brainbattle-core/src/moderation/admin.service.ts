@@ -17,11 +17,11 @@ export class AdminService {
    * Admin only
    */
   async listClans(skip?: number, take?: number, search?: string) {
-    const where: Prisma.ClanWhereInput = search
+    const where = search
       ? {
           OR: [
-            { name: { contains: search, mode: Prisma.QueryMode.insensitive } },
-            { slug: { contains: search, mode: Prisma.QueryMode.insensitive } },
+            { name: { contains: search, mode: 'insensitive' as const } },
+            { slug: { contains: search, mode: 'insensitive' as const } },
           ],
         }
       : {};
@@ -154,12 +154,12 @@ export class AdminService {
    * List all users
    */
   async listUsers(skip?: number, take?: number, search?: string) {
-    const where: Prisma.UserWhereInput = search
+    const where = search
       ? {
           OR: [
-            { email: { contains: search, mode: Prisma.QueryMode.insensitive } },
-            { displayName: { contains: search, mode: Prisma.QueryMode.insensitive } },
-            { handle: { contains: search, mode: Prisma.QueryMode.insensitive } },
+            { email: { contains: search, mode: 'insensitive' as const } },
+            { displayName: { contains: search, mode: 'insensitive' as const } },
+            { handle: { contains: search, mode: 'insensitive' as const } },
           ],
         }
       : {};
@@ -260,6 +260,73 @@ export class AdminService {
     });
 
     return { ok: true };
+  }
+
+  /**
+   * Edit user details (admin)
+   */
+  async editUser(userId: string, data: any) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) throw new NotFoundException('User not found');
+
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(data.displayName && { displayName: data.displayName }),
+        ...(data.email && { email: data.email }),
+      },
+      select: {
+        id: true,
+        email: true,
+        displayName: true,
+        updatedAt: true,
+      },
+    });
+
+    return updated;
+  }
+
+  /**
+   * Delete user (soft delete)
+   */
+  async deleteUserAdminAction(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) throw new NotFoundException('User not found');
+
+    // Soft delete
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        email: `deleted_${userId}@deleted.local`,
+        displayName: 'Deleted User',
+      },
+    });
+
+    // Remove from clans
+    await this.prisma.clanMember.deleteMany({
+      where: { userId },
+    });
+
+    // Clean up relationships
+    await this.prisma.follow.deleteMany({
+      where: {
+        OR: [{ followerId: userId }, { followeeId: userId }],
+      },
+    });
+
+    await this.prisma.block.deleteMany({
+      where: {
+        OR: [{ blockerId: userId }, { blockeeId: userId }],
+      },
+    });
+
+    return { ok: true, message: 'User deleted successfully' };
   }
 
   /* ================= REPORT MANAGEMENT ================= */

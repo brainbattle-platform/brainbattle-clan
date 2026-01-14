@@ -6,7 +6,12 @@ import { ModerationModule } from './moderation/moderation.module';
 import { InternalController } from './internal.controller';
 import { RedisModule } from './redis/redis.module';
 import { SecurityModule } from './security/security.module';
+<<<<<<< Updated upstream
 import { HealthModule } from './health/health.module';
+=======
+import { UsersModule } from './users/users.module';
+
+>>>>>>> Stashed changes
 @Module({
   imports: [
     AppConfigModule,
@@ -15,7 +20,11 @@ import { HealthModule } from './health/health.module';
     ModerationModule,
     RedisModule,
     SecurityModule,
+<<<<<<< Updated upstream
     HealthModule,
+=======
+    UsersModule,
+>>>>>>> Stashed changes
   ],
   controllers: [InternalController],
 })
