@@ -29,11 +29,14 @@ model Conversation {
   id        String           @id @default(cuid())
   type      ConversationType
   clanId    String?          @unique
+  title     String?          // Contract: thread title (for UI display)
+  avatarUrl String?          // Contract: thread avatar (for group/clan chats)
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
 
-  members   ConversationMember[]
-  messages  Message[]
+  members      ConversationMember[]
+  messages     Message[]
+  readReceipts ReadReceipt[]
 
   @@index([type])
 }
@@ -72,22 +75,24 @@ model Message {
 }
 
 model Attachment {
-  id        String         @id @default(cuid())
-  messageId String
-  kind      AttachmentKind
-  mime      String
-  size      Int
+  id           String         @id @default(cuid())
+  messageId    String
+  kind         AttachmentKind
+  mime         String
+  size         Int
 
-  bucket    String
-  objectKey String
-  url       String?        // optional: nếu muốn store public url / cached url
+  bucket       String
+  objectKey    String
+  url          String?        // optional: nếu muốn store public url / cached url
+  thumbnailUrl String?        // Contract: thumbnail URL for images/videos
+  fileName     String?        // Contract: original file name
 
-  width     Int?           // for image (optional)
-  height    Int?           // for image (optional)
+  width        Int?           // for image (optional)
+  height       Int?           // for image (optional)
 
-  createdAt DateTime       @default(now())
+  createdAt    DateTime       @default(now())
 
-  message   Message        @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  message      Message        @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
   @@index([messageId])
   @@index([objectKey])
@@ -114,6 +119,8 @@ model ReadReceipt {
   userId         String
   lastReadAt     DateTime @default(now())
 
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
   @@id([conversationId, userId])
   @@index([userId, lastReadAt])
 }
@@ -133,4 +140,12 @@ model Notification {
 
   @@index([userId])
   @@index([userId, createdAt])
+}
+
+model Presence {
+  userId       String   @id
+  lastActiveAt DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([lastActiveAt])
 }

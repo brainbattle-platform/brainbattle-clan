@@ -115,7 +115,19 @@ export class ConversationsService {
     const rows = await this.prisma.conversationMember.findMany({
       where: { userId: me, leftAt: null },
       select: {
-        conversation: { select: { id: true, type: true, clanId: true, updatedAt: true } },
+        conversation: { 
+          select: { 
+            id: true, 
+            type: true, 
+            clanId: true, 
+            updatedAt: true,
+            members: {
+              where: { leftAt: null },
+              select: { userId: true, joinedAt: true },
+              orderBy: { joinedAt: 'asc' },
+            },
+          },
+        },
       },
       orderBy: { joinedAt: 'desc' },
     });
@@ -170,5 +182,18 @@ export class ConversationsService {
     });
 
     return { ok: true };
+  }
+
+  /**
+   * Get conversation members (active only, not left)
+   * Returns array of { userId, joinedAt }
+   */
+  async getConversationMembers(conversationId: string) {
+    const members = await this.prisma.conversationMember.findMany({
+      where: { conversationId, leftAt: null },
+      select: { userId: true, joinedAt: true },
+      orderBy: { joinedAt: 'asc' },
+    });
+    return members;
   }
 }
