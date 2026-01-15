@@ -1,6 +1,5 @@
 import { Controller, Get, Post, Patch, Delete, Param, Query, Body, Req, UseGuards, HttpCode } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { JwtGuard } from '../security/jwt.guard';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AdminGuard } from '../security/admin.guard';
 import { AdminService } from './admin.service';
 import { UpdateReportStatusDto } from './dto/update-report-status.dto';
@@ -8,13 +7,11 @@ import { AdminListClansQueryDto, AdminListUsersQueryDto, AdminListReportsQueryDt
 
 /**
  * Admin Controller
- * All endpoints require admin role
- * AdminGuard added to verify admin status in JWT
+ * All endpoints require valid x-admin-key header (no JWT)
  */
 @ApiTags('Admin')
-@ApiBearerAuth('access-token')
-@UseGuards(JwtGuard, AdminGuard)
-@Controller('v1/admin')
+@UseGuards(AdminGuard)
+@Controller('admin')
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 

@@ -9,6 +9,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { AttachmentsModule } from './attachments/attachments.module';
 import { MessagesModule } from './messages/messages.module';
 import { CommunityModule } from './community/community.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { CommunityModule } from './community/community.module';
     ConversationsModule,
     MessagesModule,
     CommunityModule,
+    AdminModule,
     NotificationsModule,
     EventsModule,
     RealtimeModule,

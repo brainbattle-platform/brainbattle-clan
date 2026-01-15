@@ -1,4 +1,4 @@
-import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 
@@ -37,10 +37,11 @@ export class AdminService {
         visibility: true,
         createdBy: true,
         createdAt: true,
+        description: true,
+        avatarUrl: true,
       },
     });
 
-    // Get member count for each clan
     const clanStats = await Promise.all(
       clans.map(async (clan) => {
         const memberCount = await this.prisma.clanMember.count({

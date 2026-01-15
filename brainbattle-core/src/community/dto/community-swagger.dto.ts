@@ -18,6 +18,20 @@ export class UserLiteDto {
   avatarUrl?: string | null;
 }
 
+export class ClanMemberLiteDto {
+  @ApiProperty({ example: 'user_alice' })
+  id: string;
+
+  @ApiProperty({ example: 'user_alice' })
+  handle: string;
+
+  @ApiProperty({ example: 'Alice' })
+  displayName: string;
+
+  @ApiPropertyOptional({ example: null, nullable: true })
+  avatarUrl?: string | null;
+}
+
 export class ThreadDto {
   @ApiProperty({ example: 'conv_xyz789' })
   id: string;
@@ -143,4 +157,34 @@ export class ClanCreateResponseDto {
 
   @ApiProperty({ example: {} })
   meta: Record<string, any>;
+}
+
+export class ClanListDataDto {
+  @ApiProperty({ type: () => [ClanDto] })
+  items: ClanDto[];
+}
+
+export class ClanListResponseDto {
+  @ApiProperty({ type: () => ClanListDataDto })
+  data: ClanListDataDto;
+
+  @ApiProperty({ example: { nextCursor: null } })
+  meta: {
+    nextCursor: string | null;
+  };
+}
+
+export class ClanMembersListDataDto {
+  @ApiProperty({ type: () => [ClanMemberLiteDto] })
+  items: ClanMemberLiteDto[];
+}
+
+export class ClanMembersListResponseDto {
+  @ApiProperty({ type: () => ClanMembersListDataDto })
+  data: ClanMembersListDataDto;
+
+  @ApiProperty({ example: { nextCursor: null } })
+  meta: {
+    nextCursor: string | null;
+  };
 }

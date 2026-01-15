@@ -1,6 +1,5 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtGuard } from '../security/jwt.guard';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Req } from '@nestjs/common';
+import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommunityService } from './community.service';
 import { CreateClanDto } from './dto/create-clan.dto';
 import { ApproveJoinDto } from './dto/approve-join.dto';
@@ -11,9 +10,7 @@ import { UpdateClanSettingsDto } from './dto/update-clan-settings.dto';
 
 type AuthedRequest = Request & { user?: unknown };
 
-@ApiTags('Clan')
-@ApiBearerAuth('access-token')
-@UseGuards(JwtGuard)
+@ApiTags('Clan (legacy)')
 @Controller('v1/clans')
 export class CommunityController {
   constructor(private readonly service: CommunityService) {}
