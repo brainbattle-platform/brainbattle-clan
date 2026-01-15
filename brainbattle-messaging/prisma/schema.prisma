@@ -22,6 +22,7 @@ enum MessageKind {
 enum AttachmentKind {
   image
   file
+  link
 }
 
 

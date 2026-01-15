@@ -1,31 +1,12 @@
-<<<<<<< HEAD
 import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-=======
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
-import { Request } from 'express';
->>>>>>> main
 import { JwtGuard } from '../security/jwt.guard';
 import { ModerationService } from './moderation.service';
 import { CreateReportDto } from './dto/create-report.dto';
 import { ResolveReportDto } from './dto/resolve-report.dto';
 
-<<<<<<< HEAD
 @ApiTags('Reports')
 @ApiBearerAuth('access-token')
-=======
-type AuthedRequest = Request & { user?: unknown };
-
->>>>>>> main
 @UseGuards(JwtGuard)
 @Controller('v1/reports')
 export class ModerationController {
@@ -33,13 +14,8 @@ export class ModerationController {
 
   @ApiOperation({ summary: 'Create report' })
   @Post()
-<<<<<<< HEAD
   create(@Req() req: any, @Body() dto: CreateReportDto) {
     return this.service.create(dto, req.user.id);
-=======
-  create(@Req() req: AuthedRequest, @Body() dto: CreateReportDto) {
-    return this.service.create(dto, (req.user as { id: string }).id);
->>>>>>> main
   }
 
   @ApiOperation({ summary: 'List my reports' })

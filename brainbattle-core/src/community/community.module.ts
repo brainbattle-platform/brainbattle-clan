@@ -9,13 +9,13 @@ import { CommunityApiController } from './community-api.controller';
 import { CommunityService } from './community.service';
 
 @Module({
-<<<<<<< Updated upstream
   imports: [
     SecurityModule,
     EventsModule,
     HttpModule.register({
-      timeout: 5000,
+      timeout: 10000,  // Increase timeout to 10s for messaging service calls
       maxRedirects: 5,
+      validateStatus: () => true,  // Don't throw on any status code
     }),
   ],
   controllers: [
@@ -23,10 +23,6 @@ import { CommunityService } from './community.service';
     CommunityInternalController,
     CommunityApiController,
   ],
-=======
-  imports: [SecurityModule, EventsModule],
-  controllers: [CommunityController, CommunityInternalController, CommunityApiController],
->>>>>>> Stashed changes
   providers: [CommunityService, PrismaService],
   exports: [CommunityService],
 })

@@ -27,10 +27,10 @@ export function wrapSuccess<T>(data: T, meta: Record<string, any> = {}): ApiResp
  * Wrap list with cursor in standard format
  * Returns { data: { items }, meta: { nextCursor } }
  */
-export function wrapList<T>(items: T[], nextCursor?: string | null): ApiResponse<{ items: T[] }> {
+export function wrapList<T>(items: T[], nextCursor: string | null = null): ApiResponse<{ items: T[] }> {
   return {
     data: { items },
-    meta: nextCursor ? { nextCursor } : {},
+    meta: { nextCursor },
   };
 }
 

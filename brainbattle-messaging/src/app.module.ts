@@ -7,10 +7,7 @@ import { EventsModule } from './events/events.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { AttachmentsModule } from './attachments/attachments.module';
-<<<<<<< Updated upstream
-=======
 import { MessagesModule } from './messages/messages.module';
->>>>>>> Stashed changes
 import { CommunityModule } from './community/community.module';
 
 @Module({
@@ -25,8 +22,7 @@ import { CommunityModule } from './community/community.module';
     EventsModule,
     RealtimeModule,
     AttachmentsModule,
-    CommunityModule,
   ],
 })
-export class AppModule { }
+export class AppModule {}
 
