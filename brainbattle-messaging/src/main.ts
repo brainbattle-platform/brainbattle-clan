@@ -20,7 +20,7 @@ async function bootstrap() {
     .setTitle('brainbattle-messaging APIs')
     .setDescription('Community messaging: threads, messages, presence')
     .setVersion('1.0')
-    .addServer('http://localhost:4002', 'Local (external)')
+    .addServer('http://localhost:4003', 'Local (external)')
     .addServer('http://localhost:3001', 'Local (internal)')
     .addTag('Community', 'Community messaging endpoints (no auth required)')
     .addTag('Internal', 'Internal service-to-service endpoints')

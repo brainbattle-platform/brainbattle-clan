@@ -13,8 +13,9 @@ import { CommunityService } from './community.service';
     SecurityModule,
     EventsModule,
     HttpModule.register({
-      timeout: 5000,
+      timeout: 10000,  // Increase timeout to 10s for messaging service calls
       maxRedirects: 5,
+      validateStatus: () => true,  // Don't throw on any status code
     }),
   ],
   controllers: [

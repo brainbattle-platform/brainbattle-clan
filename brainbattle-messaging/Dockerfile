@@ -20,7 +20,8 @@ FROM node:20
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install --omit=dev
+# Copy node_modules from build stage to avoid Prisma download timeout
+COPY --from=build /app/node_modules ./node_modules
 
 COPY prisma ./prisma
 COPY --from=build /app/dist ./dist

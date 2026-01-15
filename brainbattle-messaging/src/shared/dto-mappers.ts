@@ -47,6 +47,18 @@ export interface ThreadDto {
 }
 
 /**
+ * Convert a date value to ISO8601 string in Vietnam timezone (UTC+7)
+ * Example: 2026-01-14T22:20:20.661+07:00
+ */
+export function toVietnamISOString(value: Date | string | number | undefined | null): string {
+  if (!value) return new Date(0).toISOString().replace('Z', '+07:00');
+  const date = value instanceof Date ? value : new Date(value);
+  const offsetMs = 7 * 60 * 60 * 1000;
+  const local = new Date(date.getTime() + offsetMs);
+  return local.toISOString().replace('Z', '+07:00');
+}
+
+/**
  * Map user to UserLiteDto
  */
 export function toUserLiteDto(user: any): UserLiteDto {
@@ -59,9 +71,7 @@ export function toUserLiteDto(user: any): UserLiteDto {
     avatarUrl: user.avatarUrl,
     isActiveNow: user.isActiveNow,
     lastActiveAt: user.lastActiveAt
-      ? typeof user.lastActiveAt === 'string'
-        ? user.lastActiveAt
-        : user.lastActiveAt.toISOString()
+      ? toVietnamISOString(user.lastActiveAt)
       : undefined,
   };
 }
@@ -98,7 +108,7 @@ export function toMessageDto(msg: any, sender?: any, readBy: string[] = []): Mes
     sender: toUserLiteDto(senderData),
     text: msg.content || msg.text,
     attachments: (msg.attachments || []).map(toAttachmentDto),
-    createdAt: msg.createdAt instanceof Date ? msg.createdAt.toISOString() : msg.createdAt,
+    createdAt: toVietnamISOString(msg.createdAt),
     status: 'delivered',
     readBy,
   };
@@ -126,10 +136,7 @@ export function toThreadDto(params: {
     memberCount: params.memberCount,
     participants: params.participants.map(toUserLiteDto),
     lastMessagePreview: params.lastMessagePreview,
-    lastMessageAt:
-      params.lastMessageAt instanceof Date
-        ? params.lastMessageAt.toISOString()
-        : params.lastMessageAt,
+    lastMessageAt: toVietnamISOString(params.lastMessageAt),
     unreadCount: params.unreadCount,
     avatarUrl: params.avatarUrl,
     seenBySummary: params.seenBySummary,

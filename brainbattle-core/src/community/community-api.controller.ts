@@ -4,6 +4,7 @@ import {
   Post,
   Headers,
   BadRequestException,
+  HttpCode,
 } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import {
@@ -37,11 +38,13 @@ export class CommunityApiController {
   @ApiHeader({ name: 'x-user-id', required: false, description: 'User ID (fallback: "me")' })
   @ApiResponse({ status: 201, type: ClanCreateResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid clan data (name, description, or members)' })
+  @HttpCode(201)
   @Post('clans')
   async createClan(
     @Headers('x-user-id') userId: string | undefined,
     @Body() dto: CreateClanCommunityDto,
   ) {
+    console.log('[createClan] Request received:', { userId, dto });
     const currentUserId = userId || 'me';
 
     // Validate clan name
@@ -69,11 +72,15 @@ export class CommunityApiController {
       throw new BadRequestException('Cannot create clan with more than 50 initial members');
     }
 
+    console.log('[createClan] Validation passed, creating clan...');
+
     // Create clan using existing service
     const clan = await this.communityService.createClan(currentUserId, {
       name: dto.name,
       visibility: dto.visibility || 'private',
     });
+
+    console.log('[createClan] Clan created:', clan.id);
 
     // Update clan with description and avatar if provided
     let updatedClan = clan;
@@ -85,6 +92,7 @@ export class CommunityApiController {
           avatarUrl: dto.avatarUrl || null,
         },
       });
+      console.log('[createClan] Clan updated with metadata');
     }
 
     // Add additional members to clan
@@ -99,6 +107,7 @@ export class CommunityApiController {
         })),
         skipDuplicates: true,
       });
+      console.log('[createClan] Members added:', additionalMembers);
     }
 
     // Build clan response matching contract
@@ -126,6 +135,7 @@ export class CommunityApiController {
     // Create real conversation in messaging service
     let threadResponse;
     try {
+      console.log('[createClan] Calling messaging service at:', this.messagingBaseUrl);
       const messagingResponse = await firstValueFrom(
         this.httpService.post(
           `${this.messagingBaseUrl}/internal/conversations`,
@@ -142,6 +152,7 @@ export class CommunityApiController {
         ),
       );
 
+      console.log('[createClan] Messaging service response received');
       const conversation = messagingResponse.data.data;
       threadResponse = {
         id: conversation.id,
@@ -160,11 +171,12 @@ export class CommunityApiController {
           avatarUrl: null,
         })),
       };
+      console.log('[createClan] Thread response created:', threadResponse.id);
     } catch (error) {
       // Log error but don't fail clan creation
       console.error(
-        'Failed to create thread in messaging service:',
-        error.message,
+        '[createClan] Failed to create thread in messaging service:',
+        error instanceof Error ? error.message : error,
       );
 
       // Return minimal thread response (conversation creation can be retried later)
@@ -185,11 +197,15 @@ export class CommunityApiController {
           avatarUrl: null,
         })),
       };
+      console.log('[createClan] Using fallback thread response');
     }
 
-    return wrapSuccess({
+    const result = wrapSuccess({
       clan: clanResponse,
       thread: threadResponse,
     });
+
+    console.log('[createClan] Returning response');
+    return result;
   }
 }

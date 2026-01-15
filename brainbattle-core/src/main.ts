@@ -18,18 +18,36 @@ async function bootstrap() {
     .setTitle('brainbattle-core APIs')
     .setDescription('Community: clan management')
     .setVersion('1.0')
-    .addServer('http://localhost:4003', 'Local (external)')
-    .addServer('http://localhost:3002', 'Local (internal)')
+    .addServer('http://localhost:4002', 'Local (external - core)')
+    .addServer('http://localhost:3001', 'Local (internal - core)')
     .addTag('Community', 'Community clan endpoints (no auth required)')
     .build();
 
+  // Create Swagger document with explicit module inclusion
   const document = SwaggerModule.createDocument(app, config, {
     include: [CommunityModule],
-    // Only include controllers with Community tag
   });
 
-  SwaggerModule.setup('docs', app, document);
+  // Setup Swagger at /docs endpoint
+  SwaggerModule.setup('docs', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,
+    },
+  });
 
-  await app.listen(process.env.PORT || 3002);
+  // Also setup at /api/docs for consistency
+  SwaggerModule.setup('api/docs', app, document);
+
+  const port = process.env.PORT || 3001;
+  await app.listen(port, () => {
+    console.log(`✓ brainbattle-core listening on port ${port}`);
+    console.log(`✓ Swagger API docs: http://localhost:${port}/docs`);
+    console.log(`✓ Messaging service baseUrl: ${process.env.MESSAGING_BASE_URL || 'http://messaging:3001'}`);
+  });
 }
-bootstrap();
+
+bootstrap().catch((error) => {
+  console.error('Failed to bootstrap application:', error);
+  process.exit(1);
+});
+

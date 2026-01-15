@@ -6,26 +6,50 @@ import { IsString, MinLength, IsIn, IsOptional, IsArray } from 'class-validator'
  * Includes fields expected by Flutter frontend
  */
 export class CreateClanCommunityDto {
-  @ApiProperty({ example: 'BrainBattle Vietnam' })
+  @ApiProperty({ 
+    description: 'Name of the clan',
+    example: 'BrainBattle Vietnam',
+    minLength: 3,
+    maxLength: 50,
+  })
   @IsString()
   @MinLength(3)
   name!: string;
 
-  @ApiProperty({ enum: ['public', 'private'], example: 'public' })
+  @ApiProperty({ 
+    description: 'Visibility level of the clan',
+    enum: ['public', 'private'],
+    example: 'public',
+  })
   @IsIn(['public', 'private'])
   visibility!: 'public' | 'private';
 
-  @ApiProperty({ example: 'A community for Vietnamese BrainBattle players', required: false })
+  @ApiProperty({ 
+    description: 'Description of the clan',
+    example: 'A community for Vietnamese BrainBattle players',
+    required: false,
+    maxLength: 500,
+  })
   @IsOptional()
   @IsString()
   description?: string;
 
-  @ApiProperty({ example: 'https://example.com/avatar.png', required: false })
+  @ApiProperty({ 
+    description: 'Avatar URL for the clan',
+    example: 'https://example.com/avatar.png',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   avatarUrl?: string;
 
-  @ApiProperty({ example: ['user-id-1', 'user-id-2'], required: false })
+  @ApiProperty({ 
+    description: 'List of member IDs to add to the clan',
+    example: ['user-id-1', 'user-id-2'],
+    required: false,
+    type: [String],
+    maxItems: 50,
+  })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
